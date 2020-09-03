@@ -1,4 +1,4 @@
-# Steps
+# QuickStart
 [1] make sure python 3.7 is used  
 [2] check dependency  
 [3] run  `pip3 install -r /path/to/requirements.txt`  
