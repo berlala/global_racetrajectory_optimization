@@ -42,8 +42,8 @@ plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (orig
 # file_paths["track_name"] = "handling_track"                                 # artificial track
 #file_paths["track_name"] = "berlin_2018"                                     # Berlin Formula E 2018
 # file_paths["track_name"] = "modena_2019"                                    # Modena 2019
-#file_paths["track_name"] = "shanghai"                                        # Shanghai IC, add by Bolin
-file_paths["track_name"] = "QHD_track"                                        # QingHuangDao, add by Bolin
+file_paths["track_name"] = "shanghai"                                        # Shanghai IC, add by Bolin
+#file_paths["track_name"] = "QHD_track"                                        # QingHuangDao, add by Bolin
 
 # set import options ---------------------------------------------------------------------------------------------------
 imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
@@ -112,7 +112,7 @@ with open(requirements_path, 'r') as fh:
         dependencies.append(line.rstrip())
         line = fh.readline()
 
-# check dependencies
+# check dependencies, 调用require函数接口
 pkg_resources.require(dependencies)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ if opt_type == 'mintime':
     os.makedirs(file_paths["module"] + "/outputs/mintime", exist_ok=True)
 
 # assemble export paths
-file_paths["mintime_export"] = os.path.join(file_paths["module"], "outputs", "mintime")
+file_paths["mintime_export"] = os.path.join(file_paths["module"], "outputs", "mintime") #输出最小圈速的所有参数（包括控制量）
 file_paths["traj_race_export"] = os.path.join(file_paths["module"], "outputs", "traj_race_cl.csv")
 # file_paths["traj_ltpl_export"] = os.path.join(file_paths["module"], "outputs", "traj_ltpl_cl.csv")
 file_paths["lap_time_mat_export"] = os.path.join(file_paths["module"], "outputs", lap_time_mat_opts["file"])
