@@ -71,7 +71,7 @@ def result_plots(plot_opts: dict,
         ax.set_aspect("equal", "datalim")
         plt.xlabel("east in m")
         plt.ylabel("north in m")
-        plt.title(opt_type+'on'+track_name)
+        plt.title(opt_type+' in '+track_name)
         plt.show()
 
     if plot_opts["raceline_curv"]:
