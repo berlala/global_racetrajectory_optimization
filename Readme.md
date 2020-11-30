@@ -1,7 +1,8 @@
 # QuickStart
 [1] make sure python 3.7 is used  
 [2] check dependency  
-[3] run  `pip3 install -r /path/to/requirements.txt`  
+[3] run  `pip3 install -r /path/to/requirements.txt`   
+[4] for OSX, make sure the [trajectory_planning_helpers] folder is in /user/anaconda3/lib/python3.7/site-packages  
 
 # Introduction
 This repository contains algorithms that allow us to determine an optimal racing line on a race track. You can chose
