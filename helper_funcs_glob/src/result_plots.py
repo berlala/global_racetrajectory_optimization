@@ -12,7 +12,9 @@ def result_plots(plot_opts: dict,
                  bound2_imp: np.ndarray,
                  bound1_interp: np.ndarray,
                  bound2_interp: np.ndarray,
-                 trajectory: np.ndarray) -> None:
+                 trajectory: np.ndarray,
+                 opt_type:str,
+                 track_name:dict) -> None:
     """
     Created by:
     Alexander Heilmeier
@@ -69,6 +71,7 @@ def result_plots(plot_opts: dict,
         ax.set_aspect("equal", "datalim")
         plt.xlabel("east in m")
         plt.ylabel("north in m")
+        plt.title(opt_type+'on'+track_name)
         plt.show()
 
     if plot_opts["raceline_curv"]:

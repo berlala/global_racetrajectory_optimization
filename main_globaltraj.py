@@ -1,14 +1,16 @@
-import opt_mintime_traj
-import numpy as np
-import time
+import configparser
+import copy
 import json
 import os
-import trajectory_planning_helpers as tph
-import copy
+import time
+
 import matplotlib.pyplot as plt
-import configparser
+import numpy as np
 import pkg_resources
+
 import helper_funcs_glob
+import opt_mintime_traj
+import trajectory_planning_helpers as tph
 
 """
 Created by:
@@ -54,7 +56,7 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
                                                     # only relevant in mintime-optimization
 
 # set optimization type ------------------------------------------------------------------------------------------------
-# 'shortest_path'       shortest path optimization
+# 'shortest_path'       shortest path optimization  最短轨迹长度算法
 # 'mincurv'             minimum curvature optimization without iterative call
 # 'mincurv_iqp'         minimum curvature optimization with iterative call
 # 'mintime'             time-optimal trajectory optimization
@@ -238,7 +240,7 @@ if opt_type == 'mintime' and pars["optim_opts"]["safe_traj"] \
         pars["optim_opts"]["ay_safe"] = np.amin(ggv[:, 2])
 
 # ----------------------------------------------------------------------------------------------------------------------
-# PREPARE REFTRACK -----------------------------------------------------------------------------------------------------
+# PREPARE REFTRACK -----对赛道进行前处理-----------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
 reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_interp = \
@@ -285,11 +287,12 @@ elif opt_type == 'mincurv_iqp':
                     iters_min=pars["optim_opts"]["iqp_iters_min"],
                     curv_error_allowed=pars["optim_opts"]["iqp_curverror_allowed"])
 
-elif opt_type == 'shortest_path':
+elif opt_type == 'shortest_path': # 最短轨迹长度算法，离散化赛后后用QP计算出每个segment的最优位置，以使总长度最短
     alpha_opt = tph.opt_shortest_path.opt_shortest_path(reftrack=reftrack_interp,
                                                         normvectors=normvec_normalized_interp,
                                                         w_veh=pars["optim_opts"]["width_opt"],
                                                         print_debug=debug)
+    # alpha_opt是值在[0,1]中的序列，代表segment边界上的比例位置
 
 elif opt_type == 'mintime':
     # reftrack_interp, a_interp and normvec_normalized_interp are returned for the case that non-regular sampling was
@@ -582,4 +585,6 @@ helper_funcs_glob.src.result_plots.result_plots(plot_opts=plot_opts,
                                                 bound2_imp=bound2_imp,
                                                 bound1_interp=bound1,
                                                 bound2_interp=bound2,
-                                                trajectory=trajectory_opt)
+                                                trajectory=trajectory_opt,
+                                                opt_type=opt_type,
+                                                track_name=file_paths["track_name"])
