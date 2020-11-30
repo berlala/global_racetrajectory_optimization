@@ -1,16 +1,14 @@
-import configparser
-import copy
+import opt_mintime_traj
+import numpy as np
+import time
 import json
 import os
-import time
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pkg_resources
-
-import helper_funcs_glob
-import opt_mintime_traj
 import trajectory_planning_helpers as tph
+import copy
+import matplotlib.pyplot as plt
+import configparser
+import pkg_resources
+import helper_funcs_glob
 
 """
 Created by:
@@ -45,7 +43,7 @@ plot_opts = {"mincurv_curv_lin": False,         # plot curv. linearization (orig
 #file_paths["track_name"] = "berlin_2018"                                     # Berlin Formula E 2018
 # file_paths["track_name"] = "modena_2019"                                    # Modena 2019
 file_paths["track_name"] = "shanghai"                                        # Shanghai IC, add by Bolin
-#file_paths["track_name"] = "QHD_track"                                        # QingHuangDao, add by Bolin
+#file_paths["track_name"] = "QHD"                                        # QingHuangDao, add by Bolin
 
 # set import options ---------------------------------------------------------------------------------------------------
 imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
@@ -56,11 +54,11 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
                                                     # only relevant in mintime-optimization
 
 # set optimization type ------------------------------------------------------------------------------------------------
-# 'shortest_path'       shortest path optimization  最短轨迹长度算法
+# 'shortest_path'       shortest path optimization
 # 'mincurv'             minimum curvature optimization without iterative call
 # 'mincurv_iqp'         minimum curvature optimization with iterative call
 # 'mintime'             time-optimal trajectory optimization
-opt_type = 'mintime'
+opt_type = 'shortest_path'
 
 # set mintime specific options (mintime only) --------------------------------------------------------------------------
 # tpadata:                      set individual friction map data file if desired (e.g. for varmue maps), else set None,
@@ -114,7 +112,7 @@ with open(requirements_path, 'r') as fh:
         dependencies.append(line.rstrip())
         line = fh.readline()
 
-# check dependencies, 调用require函数接口
+# check dependencies
 pkg_resources.require(dependencies)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -150,7 +148,7 @@ if opt_type == 'mintime':
     os.makedirs(file_paths["module"] + "/outputs/mintime", exist_ok=True)
 
 # assemble export paths
-file_paths["mintime_export"] = os.path.join(file_paths["module"], "outputs", "mintime") #输出最小圈速的所有参数（包括控制量）
+file_paths["mintime_export"] = os.path.join(file_paths["module"], "outputs", "mintime")
 file_paths["traj_race_export"] = os.path.join(file_paths["module"], "outputs", "traj_race_cl.csv")
 # file_paths["traj_ltpl_export"] = os.path.join(file_paths["module"], "outputs", "traj_ltpl_cl.csv")
 file_paths["lap_time_mat_export"] = os.path.join(file_paths["module"], "outputs", lap_time_mat_opts["file"])
@@ -240,7 +238,7 @@ if opt_type == 'mintime' and pars["optim_opts"]["safe_traj"] \
         pars["optim_opts"]["ay_safe"] = np.amin(ggv[:, 2])
 
 # ----------------------------------------------------------------------------------------------------------------------
-# PREPARE REFTRACK -----对赛道进行前处理-----------------------------------------------------------------------------------
+# PREPARE REFTRACK -----------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
 reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_interp = \
@@ -287,12 +285,11 @@ elif opt_type == 'mincurv_iqp':
                     iters_min=pars["optim_opts"]["iqp_iters_min"],
                     curv_error_allowed=pars["optim_opts"]["iqp_curverror_allowed"])
 
-elif opt_type == 'shortest_path': # 最短轨迹长度算法，离散化赛后后用QP计算出每个segment的最优位置，以使总长度最短
+elif opt_type == 'shortest_path':
     alpha_opt = tph.opt_shortest_path.opt_shortest_path(reftrack=reftrack_interp,
                                                         normvectors=normvec_normalized_interp,
                                                         w_veh=pars["optim_opts"]["width_opt"],
                                                         print_debug=debug)
-    # alpha_opt是值在[0,1]中的序列，代表segment边界上的比例位置
 
 elif opt_type == 'mintime':
     # reftrack_interp, a_interp and normvec_normalized_interp are returned for the case that non-regular sampling was
