@@ -103,7 +103,7 @@ file_paths["module"] = os.path.dirname(os.path.abspath(__file__))
 
 # read dependencies from requirements.txt
 requirements_path = os.path.join(file_paths["module"], 'requirements.txt')
-print(requirements_path)
+#print(requirements_path)
 dependencies = []
 
 with open(requirements_path, 'r') as fh:
@@ -112,7 +112,7 @@ with open(requirements_path, 'r') as fh:
     while line:
         dependencies.append(line.rstrip())
         line = fh.readline()
-print(dependencies)
+#print(dependencies)
 
 # check dependencies
 pkg_resources.require(dependencies)
