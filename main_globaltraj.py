@@ -249,6 +249,15 @@ reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_
                                                 stepsize_opts=pars["stepsize_opts"],
                                                 debug=debug,
                                                 min_width=imp_opts["min_track_width"])
+# Pre-Track Result Check
+# [reftrack_interp] should have the same length as [normvec_normalized_interp].
+#print(len(reftrack_interp)) 
+#print(len(normvec_normalized_interp))
+#print(reftrack_interp[0:10,:]);
+#print(normvec_normalized_interp[0:10,:])
+#plt.plot(reftrack_interp[0:10,0],reftrack_interp[0:10,1])
+#plt.axis('equal')
+#plt.show()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # CALL OPTIMIZATION ----------------------------------------------------------------------------------------------------
