@@ -156,4 +156,24 @@ def opt_shortest_path(reftrack: np.ndarray,
 
 # testing --------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    pass
+    w_veh = 2.5
+    print_debug = False
+    # The track cannot be straight
+    reftrack = np.array([(0,0,4,4),
+                         (2,2,4,4),
+                         (4,4,4,4),
+                         (6,6,4,4),
+                        (8,6,4,4),
+                        (10,6,4,4),
+                        (12,6,4,4)])
+    normvectors = np.array([(0.7071,-0.7071),
+                        (0.7071,-0.7071),
+                        (0.7071,-0.7071),
+                        (0.7071,-0.7071),
+                        (0,-1),
+                        (0,-1),
+                        (0,-1)])
+    print(reftrack)
+    print(normvectors)   
+    opt_shortest_path(reftrack,normvectors,w_veh,print_debug)
+    
