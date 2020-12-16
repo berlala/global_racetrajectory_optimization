@@ -2,6 +2,7 @@ import numpy as np
 import math
 import quadprog
 import time
+import matplotlib.pyplot as plt
 
 
 def opt_shortest_path(reftrack: np.ndarray,
@@ -58,10 +59,9 @@ def opt_shortest_path(reftrack: np.ndarray,
 
     for i in range(no_points):
         if i < no_points - 1:
-            H[i, i] = H[i, i] + 2 * (math.pow(normvectors[i, 0], 2) + math.pow(normvectors[i, 1], 2))
-            H[i, i + 1] = 0.5 * 2 * (-2 * normvectors[i, 0] * normvectors[i + 1, 0]
-                                     - 2 * normvectors[i, 1] * normvectors[i + 1, 1])
-            H[i + 1, i] = H[i, i + 1]
+            H[i, i] = H[i, i] + 2 * (math.pow(normvectors[i, 0], 2) + math.pow(normvectors[i, 1], 2)) #*2 due to 1/2*H
+            H[i, i + 1] = -2 * normvectors[i, 0] * normvectors[i + 1, 0] - 2 * normvectors[i, 1] * normvectors[i + 1, 1]
+            H[i + 1, i] = H[i, i + 1]   # same as *2
             H[i + 1, i + 1] = 2 * (math.pow(normvectors[i + 1, 0], 2) + math.pow(normvectors[i + 1, 1], 2))
 
             f[i] =f[i] + 2 * normvectors[i, 0] * reftrack[i, 0] - 2 * normvectors[i, 0] * reftrack[i + 1, 0] \
@@ -151,7 +151,42 @@ def opt_shortest_path(reftrack: np.ndarray,
     if print_debug:
         print("Solver runtime opt_shortest_path: " + "{:.3f}".format(time.perf_counter() - t_start) + "s")
 
-    return alpha_shpath
+    # Plot the final result on the global frame
+    result_pos = []
+    result_x = []
+    result_y = []
+    track_x = []
+    track_y = []
+    bond_up_x = []
+    bond_up_y = []
+    bond_down_x = []
+    bond_down_y = []
+    int_index = 0
+    for i in alpha_shpath:
+        vec = normvectors[int_index]
+        base = reftrack[int_index]
+        track_x.append(base[0])
+        track_y.append(base[1])
+
+        bond_up_x.append(base[0] + vec[0]*-1*base[2])
+        bond_up_y.append(base[1] + vec[1]*-1*base[2])
+        bond_down_x.append(base[0] + vec[0]*+1*base[2])
+        bond_down_y.append(base[1] + vec[1]*+1*base[2])
+
+        result_x.append(vec[0]*i + base[0])
+        result_y.append(vec[1]*i + base[1])
+
+        int_index = int_index+1
+    #plt.plot(reftrack[:,0],reftrack[:,1])
+    plt.plot(track_x, track_y)
+    plt.plot(bond_up_x, bond_up_y)
+    plt.plot(bond_down_x, bond_down_y)
+    plt.plot(result_x,result_y)
+    plt.legend(['track center','Up','Down','Opt Res'])
+    plt.axis('equal')
+    plt.show()
+
+    return alpha_shpath #宽度方向上的位移
 
 
 # testing --------------------------------------------------------------------------------------------------------------
@@ -163,17 +198,17 @@ if __name__ == "__main__":
                          (2,2,4,4),
                          (4,4,4,4),
                          (6,6,4,4),
-                        (8,6,4,4),
-                        (10,6,4,4),
-                        (12,6,4,4)])
+                        (10,8,4,4),
+                        (15,8,4,4),
+                        (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
     normvectors = np.array([(0.7071,-0.7071),
                         (0.7071,-0.7071),
                         (0.7071,-0.7071),
                         (0.7071,-0.7071),
                         (0,-1),
                         (0,-1),
-                        (0,-1)])
-    print(reftrack)
-    print(normvectors)   
-    opt_shortest_path(reftrack,normvectors,w_veh,print_debug)
-    
+                        (0,-1)])  # 如何避免弯心处的坐标交汇的问题？？？
+    #print(reftrack)
+    #print(normvectors)   
+    ratio = opt_shortest_path(reftrack,normvectors,w_veh,print_debug)
+    print (ratio) # positive is to right hand direction

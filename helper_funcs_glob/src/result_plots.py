@@ -124,7 +124,7 @@ def result_plots(plot_opts: dict,
             z_tmp = [0.0, trajectory[cur_ind, 5]]  # plot line with height depending on velocity
 
             # get proper color for line depending on acceleration
-            if trajectory[cur_ind, 6] > 0.0:
+            if trajectory[cur_ind, 6] > 0.0:  #通过加速度命令区分油门与制动
                 col = "g"
             elif trajectory[cur_ind, 6] < 0.0:
                 col = "r"
