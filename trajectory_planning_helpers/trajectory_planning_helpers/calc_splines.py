@@ -71,6 +71,7 @@ def calc_splines(path: np.ndarray,
         raise ValueError("el_lengths input must be one element smaller than path input!")
 
     # if distances between path coordinates are not provided but required, calculate euclidean distances as el_lengths
+    # 计算欧氏距离
     if use_dist_scaling and el_lengths is None:
         el_lengths = np.sqrt(np.sum(np.power(np.diff(path, axis=0), 2), axis=1))
     elif el_lengths is not None:
@@ -82,6 +83,7 @@ def calc_splines(path: np.ndarray,
         el_lengths = np.append(el_lengths, el_lengths[0])
 
     # get number of splines
+    # 有多少条spline, 2个点一条spline，即比输入的点数少1
     no_splines = path.shape[0] - 1
 
     # calculate scaling factors between every pair of splines
@@ -95,17 +97,21 @@ def calc_splines(path: np.ndarray,
     # ------------------------------------------------------------------------------------------------------------------
 
     # M_{x,y} * a_{x,y} = b_{x,y}) with a_{x,y} being the desired spline param
-    # *4 because of 4 parameters in cubic spline
+    # *4 because of 4 parameters in cubic spline 三次样条曲线有4个参数
     M = np.zeros((no_splines * 4, no_splines * 4))
     b_x = np.zeros((no_splines * 4, 1))
     b_y = np.zeros((no_splines * 4, 1))
 
     # create template for M array entries
     # row 1: beginning of current spline should be placed on current point (t = 0)
+    # 第一行：等于当前t=0时的x(或y，取决于哪个参数方程)
     # row 2: end of current spline should be placed on next point (t = 1)
+    # 第二行：等于当前t=1时的x(或y，取决于哪个参数方程)
     # row 3: heading at end of current spline should be equal to heading at beginning of next spline (t = 1 and t = 0)
+    # 第三行：t=1时的导数应等于下一段t=0时的导数
     # row 4: curvature at end of current spline should be equal to curvature at beginning of next spline (t = 1 and
     #        t = 0)
+    # 第四行：t=1时的二阶导数应等于下一段t=0时的二阶导数
     template_M = np.array(                          # current point               | next point              | bounds
                 [[1,  0,  0,  0,  0,  0,  0,  0],   # a_0i                                                  = {x,y}_i
                  [1,  1,  1,  1,  0,  0,  0,  0],   # a_0i + a_1i +  a_2i +  a_3i                           = {x,y}_i+1
@@ -126,10 +132,10 @@ def calc_splines(path: np.ndarray,
             M[j: j + 2, j: j + 4] = [[1,  0,  0,  0],
                                      [1,  1,  1,  1]]
 
-        b_x[j: j + 2] = [[path[i,     0]],
-                         [path[i + 1, 0]]]
-        b_y[j: j + 2] = [[path[i,     1]],
-                         [path[i + 1, 1]]]
+        b_x[j: j + 2] = [[path[i,     0]], #x_i
+                         [path[i + 1, 0]]] #x_i+1
+        b_y[j: j + 2] = [[path[i,     1]], #y_i
+                         [path[i + 1, 1]]] #y_i+1
 
     # ------------------------------------------------------------------------------------------------------------------
     # SET BOUNDARY CONDITIONS FOR LAST AND FIRST POINT -----------------------------------------------------------------
@@ -194,6 +200,7 @@ def calc_splines(path: np.ndarray,
     normvec_normalized = np.expand_dims(norm_factors, axis=1) * normvec
 
     return coeffs_x, coeffs_y, M, normvec_normalized
+    #M即A矩阵
 
 
 # testing --------------------------------------------------------------------------------------------------------------
