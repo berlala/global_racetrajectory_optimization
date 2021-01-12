@@ -78,15 +78,23 @@ def opt_min_curv(reftrack: np.ndarray,
     for i in range(no_points):
         A_ex_b[i, i * 4 + 1] = 1    # 1 * b_ix = E_x * x
 
+    #e.g., 当no_points = 3 时:
+    #A_ex_b = array([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #               [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    #               [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]])
+
     # create extraction matrix -> only c_i coefficients of the solved linear equation system are needed for curvature
     # information
     A_ex_c = np.zeros((no_points, no_points * 4), dtype=np.int)
 
     for i in range(no_points):
         A_ex_c[i, i * 4 + 2] = 2    # 2 * c_ix = D_x * x
+    #A_ex_c = array([[0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #               [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0],
+    #               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]])
 
     # invert matrix A resulting from the spline setup linear equation system and apply extraction matrix
-    A_inv = np.linalg.inv(A)
+    A_inv = np.linalg.inv(A)   #A 矩阵从外部直接输入，内部只负责抽取
     T_c = np.matmul(A_ex_c, A_inv)
 
     # set up M_x and M_y matrices including the gradient information, i.e. bring normal vectors into matrix form

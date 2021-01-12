@@ -42,18 +42,24 @@ def check_normals_crossing(track: np.ndarray,
 
     # initialization
     les_mat = np.zeros((2, 2))
-    idx_list = list(range(0, no_points))
-    idx_list = idx_list[-horizon:] + idx_list + idx_list[:horizon]
+    idx_list = list(range(0, no_points))  #例no_points=10时idx_list为[0，1，...,9]
+    idx_list = idx_list[-horizon:] + idx_list + idx_list[:horizon] 
+                # 前后补全，例horizon为3时，
+                # idx_list补全为[7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
 
     # loop through all points of the track to check for crossings in their neighbourhoods
     for idx in range(no_points):
 
         # determine indices of points in the neighbourhood of the current index
-        idx_neighbours = idx_list[idx:idx + 2 * horizon + 1]
+        idx_neighbours = idx_list[idx:idx + 2 * horizon + 1] 
+        #对idx为0时， idx_neighbours  = [7,8,9,0,1,2,3]
         del idx_neighbours[horizon]
+        #删去自身，idx_neighbours = [7,8,9,1,2,3]
         idx_neighbours = np.array(idx_neighbours)
 
         # remove indices of normal vectors that are collinear to the current index
+        normvec_normalized[idx_neighbours] # 超长
+        normvec_normalized[idx]
         is_collinear_b = np.isclose(np.cross(normvec_normalized[idx], normvec_normalized[idx_neighbours]), 0.0)
         idx_neighbours_rel = idx_neighbours[np.nonzero(np.invert(is_collinear_b))[0]]
 
