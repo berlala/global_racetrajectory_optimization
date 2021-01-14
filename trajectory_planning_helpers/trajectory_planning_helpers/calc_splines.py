@@ -132,8 +132,8 @@ def calc_splines(path: np.ndarray,
             M[j: j + 2, j: j + 4] = [[1,  0,  0,  0],
                                      [1,  1,  1,  1]]
 
-        b_x[j: j + 2] = [[path[i,     0]], #x_i
-                         [path[i + 1, 0]]] #x_i+1
+        b_x[j: j + 2] = [[path[i,     0]], #x_i, 对应template_M的第一行
+                         [path[i + 1, 0]]] #x_i+1， 对应template_M的第二行
         b_y[j: j + 2] = [[path[i,     1]], #y_i
                          [path[i + 1, 1]]] #y_i+1
 

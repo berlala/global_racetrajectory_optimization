@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 min_width = None
-reftrack_imp = np.array([(0,-4,4,4),
+reftrack_imp = np.array([(0,-1,4,4), # -1 instead of 0  in case norvec cross
                         (2,2,4,4),
                         (4,4,4,4),
                         (6,6,4,4),
