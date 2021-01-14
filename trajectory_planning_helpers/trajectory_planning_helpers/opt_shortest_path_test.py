@@ -194,7 +194,7 @@ if __name__ == "__main__":
     w_veh = 2.5
     print_debug = False
     # The track cannot be straight
-    reftrack = np.array([(0,0,4,4),
+    reftrack = np.array([(0,-1,4,4),
                          (2,2,4,4),
                          (4,4,4,4),
                          (6,6,4,4),
