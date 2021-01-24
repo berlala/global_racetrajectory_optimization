@@ -153,8 +153,8 @@ def calc_splines(path: np.ndarray,
         else:
             el_length_s = el_lengths[0]
 
-        b_x[-2] = math.cos(psi_s + math.pi / 2) * el_length_s
-        b_y[-2] = math.sin(psi_s + math.pi / 2) * el_length_s
+        b_x[-2] = math.cos(psi_s ) * el_length_s
+        b_y[-2] = math.sin(psi_s ) * el_length_s
 
         # heading end point
         M[-1, -4:] = [0, 1, 2, 3]  # heading end point (evaluated at t = 1)
@@ -164,19 +164,19 @@ def calc_splines(path: np.ndarray,
         else:
             el_length_e = el_lengths[-1]
 
-        b_x[-1] = math.cos(psi_e + math.pi / 2) * el_length_e
-        b_y[-1] = math.sin(psi_e + math.pi / 2) * el_length_e
+        b_x[-1] = math.cos(psi_e ) * el_length_e
+        b_y[-1] = math.sin(psi_e ) * el_length_e
 
     else:
         # heading boundary condition (for a closed spline)
-        M[-2, 1] = scaling[-1]
-        M[-2, -3:] = [-1, -2, -3]
+        M[-2, 1] = -1*scaling[-1]
+        M[-2, -3:] = [1, 2, 3]
         # b_x[-2] = 0
         # b_y[-2] = 0
 
         # curvature boundary condition (for a closed spline)
-        M[-1, 2] = 2 * math.pow(scaling[-1], 2)
-        M[-1, -2:] = [-2, -6]
+        M[-1, 2] = -2 * math.pow(scaling[-1], 2)
+        M[-1, -2:] = [2, 6]
         # b_x[-1] = 0
         # b_y[-1] = 0
 

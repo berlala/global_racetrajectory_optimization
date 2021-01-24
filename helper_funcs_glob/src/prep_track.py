@@ -44,8 +44,9 @@ def prep_track(reftrack_imp: np.ndarray,
                              stepsize_reg=stepsize_opts["stepsize_reg"],
                              debug=debug)
 
-    # calculate splines
-    refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0, :2]))
+    # calculate splines 默认此处强行闭环
+    refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0, :2]))  # for close loop
+    #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], [16,20])) # for open loop
 
     coeffs_x_interp, coeffs_y_interp, a_interp, normvec_normalized_interp = tph.calc_splines.\
         calc_splines(path=refpath_interp_cl)
