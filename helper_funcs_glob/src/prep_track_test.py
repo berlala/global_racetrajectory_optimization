@@ -34,7 +34,7 @@ reftrack_interp = reftrack_imp
 # calculate splines
 #注意：轨迹长度不可变，必须为size+1(补1)
 #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0, :2])) #首尾相连，闭环轨迹
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2],[21,8])) #开环轨迹,
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2],[21,8])) #开环轨迹,一定要补
 print(reftrack_interp[:, :2],)
 print('==')
 print(refpath_interp_cl)

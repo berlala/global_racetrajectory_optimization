@@ -4,14 +4,38 @@ import matplotlib.pyplot as plt
 
 # required input: path, el_lengths=None, psi_s/e, use_dist_scaling=False
 
-path = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
-                (2,2,4,4),
-                (4,4,4,4),
-                (6,6,4,4),
-                (10,8,4,4),
-                (15,8,4,4),
-                (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
-psi_s=0
+#Test Case 1 
+#path = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
+#                (2,2,4,4),
+#                (4,4,4,4),
+#                (6,6,4,4),
+#                (10,8,4,4),
+#                (15,8,4,4),
+#                (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
+#psi_s=math.pi/4
+#psi_e=0
+#el_lengths=None
+#use_dist_scaling=False
+
+#Test Case 2
+#path = np.array([(0,0,4,4), 
+#                (4,0,4,4),
+#                (8,0,4,4),
+#                (12,0,4,4),
+#                (16,4,4,4),
+#                (16,10,4,4),
+#                (16,15,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
+#psi_s=0
+#psi_e=math.pi/2
+#el_lengths=None
+#use_dist_scaling=False
+
+#Test Case 3
+path = np.array([(0,-4,4,4), 
+                 (4,0,4,4),
+                 (9,0,4,4),
+                 (12,0,4,4)]) # the last one is the extension
+psi_s=math.pi/4
 psi_e=0
 el_lengths=None
 use_dist_scaling=False
@@ -129,16 +153,19 @@ if not closed:
 
 else:
     # heading boundary condition (for a closed spline)
-    M[-2, 1] = scaling[-1]
-    M[-2, -3:] = [-1, -2, -3]
+    M[-2, 1] = -1*scaling[-1]
+    M[-2, -3:] = [1, 2, 3]
     # b_x[-2] = 0
     # b_y[-2] = 0
 
     # curvature boundary condition (for a closed spline)
-    M[-1, 2] = 2 * math.pow(scaling[-1], 2)
-    M[-1, -2:] = [-2, -6]
+    M[-1, 2] = -2 * math.pow(scaling[-1], 2)
+    M[-1, -2:] = [2, 6]
     # b_x[-1] = 0
     # b_y[-1] = 0
+
+#print("====")
+#print(b_x)
 
 # ------------------------------------------------------------------------------------------------------------------
 # SOLVE ------------------------------------------------------------------------------------------------------------
