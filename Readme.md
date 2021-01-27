@@ -32,13 +32,14 @@ Use the provided `requirements.txt` in the root directory of this repo, in order
 The code is developed with Python 3.7.
 
 ### Solutions for possible installation problems (Windows)
-`cvxpy`, `cython` or any other package requires a `Visual C++ compiler` -> Download the build tools for Visual Studio
+* `cvxpy`, `cython` or any other package requires a `Visual C++ compiler` -> Download the build tools for Visual Studio
 2019 (https://visualstudio.microsoft.com/de/downloads/ -> tools for Visual Studio 2019 -> build tools), install them and
 chose the `C++ build tools` option to install the required C++ compiler and its dependencies
+* Problems with quadprog -> reason currently not clear, test using quadprog in version 0.1.6 instead 0.1.7
 
 ### Solutions for possible installation problems (Ubuntu)
-1. `matplotlib` requires `tkinter` -> can be solved by `sudo apt install python3-tk`
-2. `Python.h` required `quadprog` -> can be solved by `sudo apt install python3-dev`
+* `matplotlib` requires `tkinter` -> can be solved by `sudo apt install python3-tk`
+* `Python.h` required `quadprog` -> can be solved by `sudo apt install python3-dev`
 
 # Creating your own friction map
 The script `main_gen_frictionmap.py` can be used to create your own friction map for any race track file supplied in the
@@ -48,7 +49,8 @@ minimum curvature planner. However, this is currently not supported from our sid
 
 # Running the code
 * `Step 1:` (optional) Adjust the parameter file that can be found in the `params` folder (required file).
-* `Step 2:` (optional) Adjust the ggv diagram and ax_max_machines file in `inputs/veh_dyn_info` (if used).
+* `Step 2:` (optional) Adjust the ggv diagram and ax_max_machines file in `inputs/veh_dyn_info` (if used). This
+acceleration should be calculated without drag resistance, i.e. simply by F_x_drivetrain / m_veh!
 * `Step 3:` (optional) Add your own reference track file in `inputs/tracks` (required file).
 * `Step 4:` (optional) Add your own friction map files in `inputs/frictionmaps` (if used).
 * `Step 5:` (optional) If you want to consider the powertrain behavior (thermal behavior, power loss, state of charge),
