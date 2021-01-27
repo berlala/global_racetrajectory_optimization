@@ -10,7 +10,6 @@ import json
 import os
 
 
-
 # required input
 # reftrack, normvectors, A, kappa_bound, w_veh
 
@@ -54,18 +53,36 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 
 #print(reftrack)
 #-----相当于pre_track------#
-start_index = 650
-end_index = 653
+start_index = 60
+end_index = 220
 reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
 #reftrack=reftrack_imp #原始闭环轨迹
 #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack_imp) #进行近似处理
 reftrack_interp = reftrack  #不进行近似处理
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环
-plt.plot(reftrack[:,0],reftrack[:,1])
-plt.axis('equal')
-plt.show()
-#TODO 看起来是链接处处理的问题导致A矩阵负定
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+
+##Show the original track 
+#plt.plot(reftrack[:,0],reftrack[:,1])
+#plt.axis('equal')
+#plt.title('Original Track')
+#plt.show()
+
+# check if path is closed 判断是否闭环
+if np.all(np.isclose(refpath_interp_cl[0], refpath_interp_cl[-1])):
+    closed = True
+    psi_s = None
+    psi_e = None
+    print("The track is closed.")
+else:
+    closed = False
+    psi_s = 1/3.0*math.pi  # 开环必须提供
+    psi_e = 0*math.pi
+    print("The track is NOT closed.")
+
+#print("The track is closed? " +str(closed))
+
+
 
 
 #reftrack_interp, coeffs_y, A, coeffs_x, coeffs_y = helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack,
@@ -75,7 +92,7 @@ plt.show()
 #                                                min_width=imp_opts["min_track_width"])
 
 [coeffs_x, coeffs_y, A, normvectors] = tph.calc_splines.calc_splines(path = refpath_interp_cl,el_lengths= None,
-                                        psi_s= 0*math.pi,psi_e= 0*math.pi,use_dist_scaling=False)
+                                        psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
 #--------结束pretrack-------#
 
 print_debug = False;
@@ -92,10 +109,7 @@ reftrack = reftrack_interp #opt内部的reftrack, 和pretrack处的不一样
 
 no_points = reftrack.shape[0]
 print("===Matrix A===")
-print(A)
-#print("===Real Eigen of A===")
-#eigenvalue, featurevector = np.linalg.eig(A)
-#print(eigenvalue.real)
+print(A)  #A矩阵是spline参数a,b,c,d的系数矩阵,由导数得到
 print("===N Vectors===")
 print(normvectors)
 print("========")
@@ -139,7 +153,7 @@ for i in range(no_points):
 #               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]])
 
 # invert matrix A resulting from the spline setup linear equation system and apply extraction matrix
-A_inv = np.linalg.inv(A)   #A 矩阵从外部直接输入，这里只负责抽取
+A_inv = np.linalg.inv(A)   #参数A 矩阵从外部直接输入，这里只负责抽取
 #print("==size fo A_inv===") 
 #print(np.size(A_inv,0)) 
 #print(np.size(A_inv,1))
@@ -161,11 +175,15 @@ for i in range(no_points):
     else: #最后
         M_x[j, i] = normvectors[i, 0]
         M_y[j, i] = normvectors[i, 1]
-        M_x[j + 1, 0] = normvectors[0, 0]  # close spline
-        M_y[j + 1, 0] = normvectors[0, 1] # close spline
+        if closed is True:
+            M_x[j + 1, 0] = normvectors[0, 0]  # close spline 
+            M_y[j + 1, 0] = normvectors[0, 1] # close spline
+        else:
+            M_x[j + 1, 0] = 0  # open spline
+            M_y[j + 1, 0] = 0 # open spline
 
 print("===Martix Mx====")
-print(M_x)
+print(M_x) # M_x是法向量矩阵，与待求解的alpha系数共同确定最优点在法向量方向上的位置
 
 # set up q_x and q_y matrices including the point coordinate information
 q_x = np.zeros((no_points * 4, 1))
@@ -181,24 +199,39 @@ for i in range(no_points):
         q_y[j, 0] = reftrack[i, 1]
         q_y[j + 1, 0] = reftrack[i + 1, 1]
     else: #最后
-        q_x[j, 0] = reftrack[i, 0]
-        q_x[j + 1, 0] = reftrack[0, 0]
-
-        q_y[j, 0] = reftrack[i, 1]
-        q_y[j + 1, 0] = reftrack[0, 1]
+        if closed is True:
+            q_x[j, 0] = reftrack[i, 0]
+            q_x[j + 1, 0] = reftrack[0, 0]
+            q_y[j, 0] = reftrack[i, 1]
+            q_y[j + 1, 0] = reftrack[0, 1]
+        else: # 对开环数据的处理，注意此处需要最后延长点的信息和起点、终点heading信息
+            q_x[j, 0] = reftrack[i, 0]
+            q_x[j + 1, 0] = refpath_interp_cl[i+1, 0] #延长点的位置
+            q_x[j + 2, 0] = math.cos(psi_s) # 起点heading
+            q_x[j + 3, 0] = math.cos(psi_e) # 终点heading
+            q_y[j, 0] = reftrack[i, 1]
+            q_y[j + 1, 0] = refpath_interp_cl[i+1, 1]
+            q_y[j + 2, 0] = math.sin(psi_s)
+            q_y[j + 3, 0] = math.sin(psi_e)
 
 print("===b_x====")
 print(q_x)
 
 # set up P_xx, P_xy, P_yy matrices
-x_prime = np.eye(no_points, no_points) * np.matmul(np.matmul(A_ex_b, A_inv), q_x)
+# Hypothesis:基于段内heading（一阶导）变化不大的强假设
+# 因此此处可直接用vec_x = A_ex*A^-1*vec_qx, 而不用类似(vec_qx+M_x*vec_alpha)引入待定系数alpha
+x_prime = np.eye(no_points, no_points) * np.matmul(np.matmul(A_ex_b, A_inv), q_x) # 乘单位阵对角化
+#print("===x_dot====")
+#print(x_prime)
+#print("===x_dot from coeffs_x====") 
+#print(np.eye(no_points, no_points)*coeffs_x[:,1])  # 即直接抽取z_x中bi,应与x_prime结果一致。注意z_x为[Num of Points,4]的矩阵
 y_prime = np.eye(no_points, no_points) * np.matmul(np.matmul(A_ex_b, A_inv), q_y)
 
 x_prime_sq = np.power(x_prime, 2)
 y_prime_sq = np.power(y_prime, 2)
 x_prime_y_prime = -2 * np.matmul(x_prime, y_prime)
 
-curv_den = np.power(x_prime_sq + y_prime_sq, 1.5)                   # calculate curvature denominator
+curv_den = np.power(x_prime_sq + y_prime_sq, 1.5)    # calculate curvature denominator
 curv_part = np.divide(1, curv_den, out=np.zeros_like(curv_den),
                         where=curv_den != 0)                          # divide where not zero (diag elements)
 curv_part_sq = np.power(curv_part, 2)
@@ -307,22 +340,20 @@ h = np.append(h, con_stack)
 # save start time
 t_start = time.perf_counter()
 
-# solve problem (CVXOPT) -------------------------------------------------------------------------------------------
-# args = [cvxopt.matrix(H), cvxopt.matrix(f), cvxopt.matrix(G), cvxopt.matrix(h)]
-# sol = cvxopt.solvers.qp(*args)
-#
-# if 'optimal' not in sol['status']:
-#     print("WARNING: Optimal solution not found!")
-#
-# alpha_mincurv = np.array(sol['x']).reshape((H.shape[1],))
+# solve problem by CVXOPT -------------------------------------------------------------------------------------------
+#args = [cvxopt.matrix(H), cvxopt.matrix(f), cvxopt.matrix(G), cvxopt.matrix(h)]
+#sol = cvxopt.solvers.qp(*args)
 
-# solve problem (quadprog) -----------------------------------------------------------------------------------------
+#if 'optimal' not in sol['status']:
+#    print("WARNING: Optimal solution not found!")
+#alpha_mincurv = np.array(sol['x']).reshape((H.shape[1],))
+
+# Or solve problem by quadprog ---------------------------------------------------------------------------------------
 eigenvalue, featurevector = np.linalg.eig(H) #矩阵特征值，判断正定
-print("===Real Part of Eigen Value of A===")
-print(eigenvalue.real)
-if eigenvalue.real.all() < 0:
-    print("A矩阵负定！")
-
+#print("===Real Part of Eigen Value of A===")  # Eigen Debug
+#print(eigenvalue.real)
+#if eigenvalue.real.all() < 0:
+#    print("A矩阵负定！")
 alpha_mincurv = quadprog.solve_qp(H, -f, -G.T, -h, 0)[0]
 
 # print runtime into console window
@@ -361,9 +392,11 @@ if plot_debug:
 # calculate maximum curvature error
 curv_error_max = np.amax(np.abs(curv_sol_lin - curv_orig_lin))
 
-#-----------Result and Plot-------------#
+# ------------------------------------------------------------------------------------------------------------------
+# RESULT and PLOT --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
 
-print('==ratio==')
+print('==ratio (result)==')
 print(alpha_mincurv)
 #print(curv_error_max)
 
@@ -395,13 +428,16 @@ for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
     int_index = int_index+1
 
 
-plt.plot(track_x, track_y)
+plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
-plt.plot(result_x,result_y)
-plt.legend(['track center','Up','Down','Opt Res'])
-plt.plot(track_x, track_y,'o')
+plt.plot(result_x,result_y,linewidth=1.5)
+plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
+plt.xlabel("East[m]")
+plt.ylabel("North[m]")
+plt.title("Optimal Result")
+#plt.plot(track_x, track_y,'o') # track center points
 for i in range(len(track_x)):
-    plt.plot([bond_down_x[i],track_x[i],bond_up_x[i]],[bond_down_y[i],track_y[i],bond_up_y[i]],'k--')
+    plt.plot([bond_down_x[i],track_x[i],bond_up_x[i]],[bond_down_y[i],track_y[i],bond_up_y[i]],'k--',linewidth=0.6)
 plt.axis('equal')
 plt.show()

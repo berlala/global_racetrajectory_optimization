@@ -4,6 +4,8 @@ Many of the functions are based on third order splines because we use them as a 
 Please keep in mind that some of the functions are designed to work on a closed (race-) track and might therefore
 not work properly on a common street network.
 
+This part of the code will NOT be imported as the running codes after setup process. The real running codes are in ./Lib/site-packages/trajectory_planning_helpers (for Anaconda envs).
+
 # List of components
 * `angle3pt`: Calculates angle by turning from a to c around b.
 * `calc_ax_profile`: Calculate the longitudinal acceleration profile for a given velocity profile.
