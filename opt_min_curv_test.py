@@ -52,12 +52,14 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
                                                             width_veh=2.0)
 
 #print(reftrack)
-#-----相当于pre_track------#
+
+#-----相当于pre_track-----------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
 start_index = 60
-end_index = 220
+end_index = 200
 reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
 #reftrack=reftrack_imp #原始闭环轨迹
-#reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack_imp) #进行近似处理
+#reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
 reftrack_interp = reftrack  #不进行近似处理
 refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
 #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
@@ -68,6 +70,9 @@ refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1,
 #plt.title('Original Track')
 #plt.show()
 
+#-----end of pre_track-----------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+
 # check if path is closed 判断是否闭环
 if np.all(np.isclose(refpath_interp_cl[0], refpath_interp_cl[-1])):
     closed = True
@@ -76,8 +81,10 @@ if np.all(np.isclose(refpath_interp_cl[0], refpath_interp_cl[-1])):
     print("The track is closed.")
 else:
     closed = False
-    psi_s = 1/3.0*math.pi  # 开环必须提供
-    psi_e = 0*math.pi
+    psi_s = math.atan((refpath_interp_cl[1,1] - refpath_interp_cl[0,1])/(refpath_interp_cl[1,0] - refpath_interp_cl[0,0])) # 开环必须提供首尾航向角
+    psi_e = math.atan((refpath_interp_cl[-1,1] - refpath_interp_cl[-2,1])/(refpath_interp_cl[-1,0] - refpath_interp_cl[-2,0]))
+    #print(psi_s/math.pi*180)
+    #print(psi_e/math.pi*180)
     print("The track is NOT closed.")
 
 #print("The track is closed? " +str(closed))
