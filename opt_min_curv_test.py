@@ -270,15 +270,21 @@ f = np.squeeze(f)   # remove non-singleton dimensions
 # ------------------------------------------------------------------------------------------------------------------
 # KAPPA CONSTRAINTS ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------
+# -k_bound <= k_ref + k_var <= k_bound 
+# 其中k_bound 是车辆的最大转向等效曲率
+# 可以理解为k_ref为车辆在通过路段处的默认转向角，k_var是法向量方向移动后的增量转向角
+# 通过分解k_ref + k_var 
 
-Q_x = np.matmul(curv_part, y_prime)
-Q_y = np.matmul(curv_part, x_prime)
+Q_x = np.matmul(curv_part, y_prime)  # y'/(x'^2+y'^2)^(3/2)
+Q_y = np.matmul(curv_part, x_prime)  # x'/(x'^2+y'^2)^(3/2)
 
 # this part is multiplied by alpha within the optimization (variable part)
 E_kappa = np.matmul(Q_y, T_ny) - np.matmul(Q_x, T_nx)
+#相当于x''和y''的含参部分的系数
 
 # original curvature part (static part)
 k_kappa_ref = np.matmul(Q_y, np.matmul(T_c, q_y)) - np.matmul(Q_x, np.matmul(T_c, q_x))
+# from the curvature defination, Eq[9], 相当于x''和y''的常数部分
 
 con_ge = np.ones((no_points, 1)) * kappa_bound - k_kappa_ref
 con_le = -(np.ones((no_points, 1)) * -kappa_bound - k_kappa_ref)  # multiplied by -1 as only LE conditions are poss.
@@ -341,6 +347,7 @@ if np.any(-dev_max_right > dev_max_left) or np.any(-dev_max_left > dev_max_right
 
 # consider value boundaries (-dev_max_left <= alpha <= dev_max_right)
 G = np.vstack((np.eye(no_points), -np.eye(no_points), E_kappa, -E_kappa))
+# np.eye()引入的是最大侧向位移约束
 h = np.append(dev_max_right, dev_max_left)
 h = np.append(h, con_stack)
 
