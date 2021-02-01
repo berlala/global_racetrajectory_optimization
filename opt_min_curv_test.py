@@ -57,12 +57,12 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 #------------------------------------------------------------------------------------------------------
 start_index = 50
 end_index = 600
-reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
-#reftrack=reftrack_imp #原始闭环轨迹
+#reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
+reftrack=reftrack_imp #原始闭环轨迹
 #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
 reftrack_interp = reftrack  #不进行近似处理
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
 
 ##Show the original track 
 #plt.plot(reftrack[:,0],reftrack[:,1])
@@ -474,8 +474,11 @@ print(np.size(result_x))
 #-----相当于pre_track-----------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
 raceline_interp = raceline  #不进行近似处理
-raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+if closed is True:
+    raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], raceline_interp[0,0:2]))  #闭环，使收尾相等
+else:
+    raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+
 #-----end of pre_track-----------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------
 
@@ -504,7 +507,10 @@ print(np.size(t_values_raceline_interp)) # size check ok
 # calculate element lengths
 s_tot_raceline = float(np.sum(spline_lengths_raceline))
 el_lengths_raceline_interp = np.diff(s_raceline_interp)
-el_lengths_raceline_interp_cl = np.append(el_lengths_raceline_interp, s_tot_raceline - s_raceline_interp[-1])
+if closed is True:
+    el_lengths_raceline_interp_cl = np.append(el_lengths_raceline_interp, s_tot_raceline - s_raceline_interp[-1])
+else:
+    el_lengths_raceline_interp_cl = el_lengths_raceline_interp
 
 print("====t_values_raceline_interp===")
 print(np.size(t_values_raceline_interp)) #t的总长度，t为1维,0<t<1
@@ -515,6 +521,9 @@ psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs
                       coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
                       t_spls=t_values_raceline_interp)
 
+#print('== == kappa size == ==')
+#print(np.size(kappa_opt))
+
 ggv, ax_max_machines = tph.import_veh_dyn_info.\
     import_veh_dyn_info(ggv_import_path='./inputs/veh_dyn_info/ggv.csv',
                         ax_max_machines_import_path='./inputs/veh_dyn_info/ax_max_machines.csv')
@@ -523,8 +532,8 @@ vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(ggv=ggv,
                         ax_max_machines=ax_max_machines,
                         v_max=70,
                         kappa=kappa_opt,
-                        el_lengths=el_lengths_raceline_interp,
-                        closed=False,
+                        el_lengths=el_lengths_raceline_interp_cl,
+                        closed=closed,
                         dyn_model_exp=1.0,
                         drag_coeff=0.75,
                         v_start = 20,
