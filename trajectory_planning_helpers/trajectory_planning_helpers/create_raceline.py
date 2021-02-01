@@ -47,9 +47,11 @@ def create_raceline(refline: np.ndarray,
     """
 
     # calculate raceline on the basis of the optimized alpha values
+    # 赛车线的坐标
     raceline = refline + np.expand_dims(alpha, 1) * normvectors
 
     # calculate new splines on the basis of the raceline
+    # 对赛车线进行样条曲线插值
     raceline_cl = np.vstack((raceline, raceline[0]))
 
     coeffs_x_raceline, coeffs_y_raceline, A_raceline, normvectors_raceline = tph.calc_splines.\

@@ -11,7 +11,7 @@ import os
 
 
 # required input
-# reftrack, normvectors, A, kappa_bound, w_veh
+# reftrack, normvectors_refline, A, kappa_bound, w_veh
 
 #Test Case 1
 #reftrack = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
@@ -55,8 +55,8 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 
 #-----相当于pre_track-----------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
-start_index = 60
-end_index = 200
+start_index = 50
+end_index = 600
 reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
 #reftrack=reftrack_imp #原始闭环轨迹
 #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
@@ -98,7 +98,7 @@ else:
 #                                                debug=debug,
 #                                                min_width=imp_opts["min_track_width"])
 
-[coeffs_x, coeffs_y, A, normvectors] = tph.calc_splines.calc_splines(path = refpath_interp_cl,el_lengths= None,
+[coeffs_x_refline, coeffs_y_refline, A, normvectors_refline] = tph.calc_splines.calc_splines(path = refpath_interp_cl,el_lengths= None,
                                         psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
 #--------结束pretrack-------#
 
@@ -115,21 +115,21 @@ w_veh = 2.0;
 reftrack = reftrack_interp #opt内部的reftrack, 和pretrack处的不一样
 
 no_points = reftrack.shape[0]
-print("===Matrix A===")
-print(A)  #A矩阵是spline参数a,b,c,d的系数矩阵,由导数得到
-print("===N Vectors===")
-print(normvectors)
+#print("===Matrix A===")
+#print(A)  #A矩阵是spline参数a,b,c,d的系数矩阵,由导数得到
+#print("===N Vectors===")
+#print(normvectors_refline)
 print("========")
 print("num of points")
 print(no_points)
-print("norm vectors")
-print(normvectors.shape[0]) #注意normvector的方向，可能会莫名反向
+#print("norm vectors")
+#print(normvectors_refline.shape[0]) #注意normvector的方向，可能会莫名反向
 print("========")
 
 
 # check inputs
-if no_points != normvectors.shape[0]:
-    raise ValueError("Array size of reftrack should be the same as normvectors!")
+if no_points != normvectors_refline.shape[0]:
+    raise ValueError("Array size of reftrack should be the same as normvectors_refline!")
 
 if no_points * 4 != A.shape[0] or A.shape[0] != A.shape[1]:
     raise ValueError("Spline equation system matrix A has wrong dimensions!")
@@ -175,22 +175,22 @@ for i in range(no_points):
     j = i * 4
 
     if i < no_points - 1:
-        M_x[j, i] = normvectors[i, 0]
-        M_y[j, i] = normvectors[i, 1]
-        M_x[j + 1, i + 1] = normvectors[i + 1, 0]
-        M_y[j + 1, i + 1] = normvectors[i + 1, 1]
+        M_x[j, i] = normvectors_refline[i, 0]
+        M_y[j, i] = normvectors_refline[i, 1]
+        M_x[j + 1, i + 1] = normvectors_refline[i + 1, 0]
+        M_y[j + 1, i + 1] = normvectors_refline[i + 1, 1]
     else: #最后
-        M_x[j, i] = normvectors[i, 0]
-        M_y[j, i] = normvectors[i, 1]
+        M_x[j, i] = normvectors_refline[i, 0]
+        M_y[j, i] = normvectors_refline[i, 1]
         if closed is True:
-            M_x[j + 1, 0] = normvectors[0, 0]  # close spline 
-            M_y[j + 1, 0] = normvectors[0, 1] # close spline
+            M_x[j + 1, 0] = normvectors_refline[0, 0]  # close spline 
+            M_y[j + 1, 0] = normvectors_refline[0, 1] # close spline
         else:
             M_x[j + 1, 0] = 0  # open spline
             M_y[j + 1, 0] = 0 # open spline
 
-print("===Martix Mx====")
-print(M_x) # M_x是法向量矩阵，与待求解的alpha系数共同确定最优点在法向量方向上的位置
+#print("===Martix Mx====")
+#print(M_x) # M_x是法向量矩阵，与待求解的alpha系数共同确定最优点在法向量方向上的位置
 
 # set up q_x and q_y matrices including the point coordinate information
 q_x = np.zeros((no_points * 4, 1))
@@ -221,8 +221,8 @@ for i in range(no_points):
             q_y[j + 2, 0] = math.sin(psi_s)
             q_y[j + 3, 0] = math.sin(psi_e)
 
-print("===b_x====")
-print(q_x)
+#print("===b_x====")
+#print(q_x)
 
 # set up P_xx, P_xy, P_yy matrices
 # Hypothesis:基于段内heading（一阶导）变化不大的强假设
@@ -407,11 +407,11 @@ if plot_debug:
 curv_error_max = np.amax(np.abs(curv_sol_lin - curv_orig_lin))
 
 # ------------------------------------------------------------------------------------------------------------------
-# RESULT and PLOT --------------------------------------------------------------------------------------------------
+# RESULT and PLOT for Trajectory -----------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------
 
-print('==ratio (result)==')
-print(alpha_mincurv)
+#print('==ratio (result)==')
+#print(alpha_mincurv)
 #print(curv_error_max)
 
 # Plot the final result on the global frame
@@ -425,8 +425,9 @@ bond_up_y = []
 bond_down_x = []
 bond_down_y = []
 int_index = 0  #
+raceline = []
 for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
-    vec = normvectors[int_index]
+    vec = normvectors_refline[int_index]
     base = reftrack[int_index]
     track_x.append(base[0])
     track_y.append(base[1])
@@ -438,10 +439,11 @@ for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
 
     result_x.append(vec[0]*i + base[0])
     result_y.append(vec[1]*i + base[1])
+    raceline.append([result_x[-1],result_y[-1]])
 
     int_index = int_index+1
 
-
+raceline = np.asarray(raceline) # List转np.rray
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
@@ -453,5 +455,131 @@ plt.title("Optimal Result")
 #plt.plot(track_x, track_y,'o') # track center points
 for i in range(len(track_x)):
     plt.plot([bond_down_x[i],track_x[i],bond_up_x[i]],[bond_down_y[i],track_y[i],bond_up_y[i]],'k--',linewidth=0.6)
+plt.axis('equal')
+plt.show()
+
+print('== == result waypoint num == ==')
+print(np.size(result_x))
+
+# ------------------------------------------------------------------------------------------------------------------
+# CALCULATE SPEED --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+
+# 基于优化结果alpha构建赛车线，将其处理成与refline一致的格式
+#psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs_x_opt,
+#                      coeffs_y=coeffs_y_opt,
+#                      ind_spls=spline_inds_opt_interp,
+#                      t_spls=t_vals_opt_interp)
+
+#-----相当于pre_track-----------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+raceline_interp = raceline  #不进行近似处理
+raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+#-----end of pre_track-----------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+
+#对raceline,重新进行样条曲线拟合处理，获取参数
+[coeffs_x_raceline, coeffs_y_raceline, A, normvectors_raceline] = tph.calc_splines.calc_splines(path = raceline_interp_interp_cl,el_lengths= None,
+                                        psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
+
+# calculate new spline lengths
+spline_lengths_raceline = tph.calc_spline_lengths.calc_spline_lengths(coeffs_x=coeffs_x_raceline,
+                        coeffs_y=coeffs_y_raceline)
+print('==size of origin spline length ==')
+print(np.size(spline_lengths_raceline)) # size check ok
+
+
+# interpolate splines for evenly spaced raceline points
+raceline_interp, spline_inds_raceline_interp, t_values_raceline_interp, s_raceline_interp = tph.\
+    interp_splines.interp_splines(spline_lengths=spline_lengths_raceline,
+                                    coeffs_x=coeffs_x_raceline,
+                                    coeffs_y=coeffs_y_raceline,
+                                    incl_last_point=False,
+                                    stepsize_approx=1.0)
+
+print('==size of interp length ==')
+print(np.size(t_values_raceline_interp)) # size check ok
+
+# calculate element lengths
+s_tot_raceline = float(np.sum(spline_lengths_raceline))
+el_lengths_raceline_interp = np.diff(s_raceline_interp)
+el_lengths_raceline_interp_cl = np.append(el_lengths_raceline_interp, s_tot_raceline - s_raceline_interp[-1])
+
+print("====t_values_raceline_interp===")
+print(np.size(t_values_raceline_interp)) #t的总长度，t为1维,0<t<1
+#print(t_values_raceline_interp)
+
+# calculate heading and curvature, 对生成的raceline,计算各点的航向和曲率
+psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs_x_raceline,
+                      coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
+                      t_spls=t_values_raceline_interp)
+
+ggv, ax_max_machines = tph.import_veh_dyn_info.\
+    import_veh_dyn_info(ggv_import_path='./inputs/veh_dyn_info/ggv.csv',
+                        ax_max_machines_import_path='./inputs/veh_dyn_info/ax_max_machines.csv')
+
+vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(ggv=ggv,
+                        ax_max_machines=ax_max_machines,
+                        v_max=70,
+                        kappa=kappa_opt,
+                        el_lengths=el_lengths_raceline_interp,
+                        closed=False,
+                        dyn_model_exp=1.0,
+                        drag_coeff=0.75,
+                        v_start = 20,
+                        m_veh=1200)
+
+# calculate longitudinal acceleration profile
+if closed is True:  
+    vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[0])
+else:
+    vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[-1])
+
+ax_profile_opt = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_opt_cl,
+                                                    el_lengths=el_lengths_raceline_interp_cl,
+                                                    eq_length_output=False)
+
+# calculate laptime
+t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
+                                                ax_profile=ax_profile_opt,
+                                                el_lengths=el_lengths_raceline_interp_cl)
+
+
+# ------------------------------------------------------------------------------------------------------------------
+# RESULT and PLOT for Velocity -------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+#print(np.size(t_profile_cl)) # debug for the size match for plot
+#print(np.size(vx_profile_opt_cl))
+#print(np.size(ax_profile_opt))
+
+
+plt.subplot(2,1,1)
+plt.plot(t_profile_cl,vx_profile_opt_cl*3.6)
+plt.legend(['Velocity[km/h]'])
+plt.subplot(2,1,2)
+plt.plot(t_profile_cl[:-1],ax_profile_opt)
+plt.legend(['Acc[m/s^2]'])
+plt.xlabel('time[s]')
+plt.show()
+
+# --------------------------------------------
+# Plot The Race Trajectory with Velocity Info
+# --------------------------------------------
+
+#print('==check interp size == ')
+#print(np.size(raceline_interp[:,0]))
+#print(np.size(vx_profile_opt_cl))
+
+cm = plt.cm.get_cmap('RdYlBu')
+plt.plot(track_x, track_y,'--',linewidth=0.6)
+plt.plot(bond_up_x, bond_up_y)
+plt.plot(bond_down_x, bond_down_y)
+sc = plt.scatter(raceline_interp[:,0],raceline_interp[:,1], s= 6, c = vx_profile_opt*3.6, cmap = cm)
+plt.colorbar(sc)
+plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
+plt.xlabel("East[m]")
+plt.ylabel("North[m]")
+plt.title("Optimal Result with Speed")
 plt.axis('equal')
 plt.show()
