@@ -57,12 +57,12 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 #------------------------------------------------------------------------------------------------------
 start_index = 50
 end_index = 600
-#reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
-reftrack=reftrack_imp #原始闭环轨迹
+reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
+#reftrack=reftrack_imp #原始闭环轨迹
 #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
 reftrack_interp = reftrack  #不进行近似处理
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
 
 ##Show the original track 
 #plt.plot(reftrack[:,0],reftrack[:,1])
@@ -543,7 +543,7 @@ vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(ggv=ggv,
 if closed is True:  
     vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[0])
 else:
-    vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[-1])
+    vx_profile_opt_cl = vx_profile_opt
 
 ax_profile_opt = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_opt_cl,
                                                     el_lengths=el_lengths_raceline_interp_cl,
