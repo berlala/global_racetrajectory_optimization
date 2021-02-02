@@ -1,220 +1,8 @@
 import numpy as np
 import math
 import trajectory_planning_helpers.conv_filt
-
-
-def calc_vel_profile(ax_max_machines: np.ndarray,
-                     kappa: np.ndarray,
-                     el_lengths: np.ndarray,
-                     closed: bool,
-                     drag_coeff: float,
-                     m_veh: float,
-                     ggv: np.ndarray = None,
-                     loc_gg: np.ndarray = None,
-                     v_max: float = None,
-                     dyn_model_exp: float = 1.0,
-                     mu: np.ndarray = None,
-                     v_start: float = None,
-                     v_end: float = None,
-                     filt_window: int = None) -> np.ndarray:
-    """
-    author:
-    Alexander Heilmeier
-
-    modified by:
-    Tim Stahl
-
-    .. description::
-    Calculates a velocity profile using the tire and motor limits as good as possible.
-
-    .. inputs::
-    :param ax_max_machines: longitudinal acceleration limits by the electrical motors: [vx, ax_max_machines]. Velocity
-                            in m/s, accelerations in m/s2. They should be handed in without considering drag resistance.
-    :type ax_max_machines:  np.ndarray
-    :param kappa:           curvature profile of given trajectory in rad/m (always unclosed).
-    :type kappa:            np.ndarray
-    :param el_lengths:      element lengths (distances between coordinates) of given trajectory.
-    :type el_lengths:       np.ndarray
-    :param closed:          flag to set if the velocity profile must be calculated for a closed or unclosed trajectory.
-    :type closed:           bool
-    :param drag_coeff:      drag coefficient including all constants: drag_coeff = 0.5 * c_w * A_front * rho_air
-    :type drag_coeff:       float
-    :param m_veh:           vehicle mass in kg.
-    :type m_veh:            float
-    :param ggv:             ggv-diagram to be applied: [vx, ax_max, ay_max]. Velocity in m/s, accelerations in m/s2.
-                            ATTENTION: Insert either ggv + mu (optional) or loc_gg!
-    :type ggv:              np.ndarray
-    :param loc_gg:          local gg diagrams along the path points: [[ax_max_0, ay_max_0], [ax_max_1, ay_max_1], ...],
-                            accelerations in m/s2. ATTENTION: Insert either ggv + mu (optional) or loc_gg!
-    :type loc_gg:           np.ndarray
-    :param v_max:           Maximum longitudinal speed in m/s (optional if ggv is supplied, taking the minimum of the
-                            fastest velocities covered by the ggv and ax_max_machines arrays then).
-    :type v_max:            float
-    :param dyn_model_exp:   exponent used in the vehicle dynamics model (usual range [1.0,2.0]).
-    :type dyn_model_exp:    float
-    :param mu:              friction coefficients (always unclosed).
-    :type mu:               np.ndarray
-    :param v_start:         start velocity in m/s (used in unclosed case only).
-    :type v_start:          float
-    :param v_end:           end velocity in m/s (used in unclosed case only).
-    :type v_end:            float
-    :param filt_window:     filter window size for moving average filter (must be odd).
-    :type filt_window:      int
-
-    .. outputs::
-    :return vx_profile:     calculated velocity profile (always unclosed).
-    :rtype vx_profile:      np.ndarray
-
-    .. notes::
-    All inputs must be inserted unclosed, i.e. kappa[-1] != kappa[0], even if closed is set True! (el_lengths is kind of
-    closed if closed is True of course!)
-
-    case closed is True:
-    len(kappa) = len(el_lengths) = len(mu) = len(vx_profile)
-
-    case closed is False:
-    len(kappa) = len(el_lengths) + 1 = len(mu) = len(vx_profile)
-    """
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # INPUT CHECKS -----------------------------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # check if either ggv (and optionally mu) or loc_gg are handed in
-    if (ggv is not None or mu is not None) and loc_gg is not None:
-        raise ValueError("Either ggv and optionally mu OR loc_gg must be supplied, not both (or all) of them!")
-
-    if ggv is None and loc_gg is None:
-        raise ValueError("Either ggv or loc_gg must be supplied!")
-
-    # check shape of loc_gg
-    if loc_gg is not None:
-        if loc_gg.ndim != 2:
-            raise ValueError("loc_gg must have two dimensions!")
-
-        if loc_gg.shape[0] != kappa.size:
-            raise ValueError("Length of loc_gg and kappa must be equal!")
-
-        if loc_gg.shape[1] != 2:
-            raise ValueError("loc_gg must consist of two columns: [ax_max, ay_max]!")
-
-    # check shape of ggv
-    if ggv is not None and ggv.shape[1] != 3:
-        raise ValueError("ggv diagram must consist of the three columns [vx, ax_max, ay_max]!")
-
-    # check size of mu
-    if mu is not None and kappa.size != mu.size:
-        raise ValueError("kappa and mu must have the same length!")
-
-    # check size of kappa and element lengths
-    if closed and kappa.size != el_lengths.size:
-        raise ValueError("kappa and el_lengths must have the same length if closed!")
-
-    elif not closed and kappa.size != el_lengths.size + 1:
-        raise ValueError("kappa must have the length of el_lengths + 1 if unclosed!")
-
-    # check start and end velocities
-    if not closed and v_start is None:
-        raise ValueError("v_start must be provided for the unclosed case!")
-
-    if v_start is not None and v_start < 0.0:
-        v_start = 0.0
-        print('WARNING: Input v_start was < 0.0. Using v_start = 0.0 instead!')
-        # 用于开环，起点速度
-
-    if v_end is not None and v_end < 0.0:
-        v_end = 0.0
-        print('WARNING: Input v_end was < 0.0. Using v_end = 0.0 instead!')
-        # 用于开环，终点速度
-
-    # check dyn_model_exp
-    if not 1.0 <= dyn_model_exp <= 2.0:
-        print('WARNING: Exponent for the vehicle dynamics model should be in the range [1.0, 2.0]!')
-
-    # check shape of ax_max_machines
-    if ax_max_machines.shape[1] != 2:
-        raise ValueError("ax_max_machines must consist of the two columns [vx, ax_max_machines]!")
-
-    # check v_max
-    if v_max is None:
-        if ggv is None:
-            raise ValueError("v_max must be supplied if ggv is None!")
-        else:
-            v_max = min(ggv[-1, 0], ax_max_machines[-1, 0])
-
-    else:
-        # check if ggv covers velocity until v_max
-        if ggv is not None and ggv[-1, 0] < v_max:
-            raise ValueError("ggv has to cover the entire velocity range of the car (i.e. >= v_max)!")
-
-        # check if ax_max_machines covers velocity until v_max
-        if ax_max_machines[-1, 0] < v_max:
-            raise ValueError("ax_max_machines has to cover the entire velocity range of the car (i.e. >= v_max)!")
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # BRINGING GGV OR LOC_GG INTO SHAPE FOR EQUAL HANDLING AFTERWARDS --------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------------------
-
-    """For an equal/easier handling of every case afterwards we bring all cases into a form where the local ggv is made
-    available for every waypoint, i.e. [ggv_0, ggv_1, ggv_2, ...] -> we have a three dimensional array p_ggv (path_ggv)
-    where the first dimension is the waypoint, the second is the velocity and the third is the two acceleration columns
-    -> DIM = NO_WAYPOINTS_CLOSED x NO_VELOCITY ENTRIES x 3"""
-
-    # CASE 1: ggv supplied -> copy it for every waypoint
-    if ggv is not None:
-        p_ggv = np.repeat(np.expand_dims(ggv, axis=0), kappa.size, axis=0)
-        op_mode = 'ggv'
-
-    # CASE 2: local gg diagram supplied -> add velocity dimension (artificial velocity of 10.0 m/s)
-    else:
-        p_ggv = np.expand_dims(np.column_stack((np.ones(loc_gg.shape[0]) * 10.0, loc_gg)), axis=1)
-        op_mode = 'loc_gg'
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # SPEED PROFILE CALCULATION (FB) -----------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # transform curvature kappa into corresponding radii (abs because curvature has a sign in our convention)
-    radii = np.abs(np.divide(1.0, kappa, out=np.full(kappa.size, np.inf), where=kappa != 0.0))
-
-    # call solver
-    if not closed:
-        vx_profile = __solver_fb_unclosed(p_ggv=p_ggv,
-                                          ax_max_machines=ax_max_machines,
-                                          v_max=v_max,
-                                          radii=radii,
-                                          el_lengths=el_lengths,
-                                          mu=mu,
-                                          v_start=v_start,
-                                          v_end=v_end,
-                                          dyn_model_exp=dyn_model_exp,
-                                          drag_coeff=drag_coeff,
-                                          m_veh=m_veh,
-                                          op_mode=op_mode)
-
-    else:
-        vx_profile = __solver_fb_closed(p_ggv=p_ggv,
-                                        ax_max_machines=ax_max_machines,
-                                        v_max=v_max,
-                                        radii=radii,
-                                        el_lengths=el_lengths,
-                                        mu=mu,
-                                        dyn_model_exp=dyn_model_exp,
-                                        drag_coeff=drag_coeff,
-                                        m_veh=m_veh,
-                                        op_mode=op_mode)
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # POSTPROCESSING ---------------------------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------------------
-
-    if filt_window is not None:
-        vx_profile = trajectory_planning_helpers.conv_filt.conv_filt(signal=vx_profile,
-                                                                     filt_window=filt_window,
-                                                                     closed=closed)
-
-    return vx_profile
-
+import trajectory_planning_helpers.import_veh_dyn_info
+import matplotlib.pyplot as plt
 
 def __solver_fb_unclosed(p_ggv: np.ndarray,
                          ax_max_machines: np.ndarray,
@@ -335,11 +123,6 @@ def __solver_fb_closed(p_ggv: np.ndarray,
     # cut vx_profile to car's top speed
     vx_profile[vx_profile > v_max] = v_max
 
-    #TODO temporary fix connection issue 临时补丁 修复连接处速度下降的bug
-    if vx_profile[5] == v_max and vx_profile[-5]==v_max:
-        vx_profile[:5] = v_max
-        vx_profile[-5:] = v_max
-
     """We need to calculate the speed profile for two laps to get the correct starting and ending velocity."""
 
     # double arrays 数组拼接，因为需要两圈
@@ -361,9 +144,12 @@ def __solver_fb_closed(p_ggv: np.ndarray,
                                                 dyn_model_exp=dyn_model_exp,
                                                 drag_coeff=drag_coeff,
                                                 m_veh=m_veh)
+    print(vx_profile_double)
 
     # use second lap of acceleration profile
     vx_profile_double = np.concatenate((vx_profile_double[no_points:], vx_profile_double[no_points:]), axis=0)
+
+    print(vx_profile_double)
 
     # calculate deceleration profile 减速度限制计算
     vx_profile_double = __solver_fb_acc_profile(p_ggv=p_ggv_double,
@@ -377,6 +163,8 @@ def __solver_fb_closed(p_ggv: np.ndarray,
                                                 dyn_model_exp=dyn_model_exp,
                                                 drag_coeff=drag_coeff,
                                                 m_veh=m_veh)
+    print(vx_profile_double)
+    plt.show()
 
     # use second lap of deceleration profile
     vx_profile = vx_profile_double[no_points:]
@@ -614,7 +402,256 @@ def calc_ax_poss(vx_start: float,
 
     return ax_final
 
+# --- Run as Script -----
 
-# testing --------------------------------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    pass
+##Required Inputs 
+#ax_max_machines: np.ndarray,
+#kappa: np.ndarray,
+#el_lengths: np.ndarray,
+#closed: bool,
+#drag_coeff: float,
+#m_veh: float,
+#ggv: np.ndarray = None,
+#loc_gg: np.ndarray = None,
+#v_max: float = None,
+#dyn_model_exp: float = 1.0,
+#mu: np.ndarray = None,
+#v_start: float = None,
+#v_end: float = None,
+#filt_window: int = None) -> np.ndarray:
+
+ggv, ax_max_machines = trajectory_planning_helpers.import_veh_dyn_info.\
+    import_veh_dyn_info(ggv_import_path='../../inputs/veh_dyn_info/ggv.csv',
+                        ax_max_machines_import_path='../../inputs/veh_dyn_info/ax_max_machines.csv')
+
+data = np.load('../../kanel_cl.npz') # 读取上赛道闭环轨迹结果
+kappa = data['kappa']
+el_lengths = data['el_lengths']
+closed = True
+loc_gg = None
+dyn_model_exp=1.0
+drag_coeff=0.75
+v_start = None
+v_end = None
+m_veh=1200
+v_max = 70
+filt_window = None
+mu = None
+
+# ------------------------------------------------------------------------------------------------------------------
+# INPUT CHECKS -----------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+
+# check if either ggv (and optionally mu) or loc_gg are handed in
+if (ggv is not None or mu is not None) and loc_gg is not None:
+    raise ValueError("Either ggv and optionally mu OR loc_gg must be supplied, not both (or all) of them!")
+
+if ggv is None and loc_gg is None:
+    raise ValueError("Either ggv or loc_gg must be supplied!")
+
+# check shape of loc_gg
+if loc_gg is not None:
+    if loc_gg.ndim != 2:
+        raise ValueError("loc_gg must have two dimensions!")
+
+    if loc_gg.shape[0] != kappa.size:
+        raise ValueError("Length of loc_gg and kappa must be equal!")
+
+    if loc_gg.shape[1] != 2:
+        raise ValueError("loc_gg must consist of two columns: [ax_max, ay_max]!")
+
+# check shape of ggv
+if ggv is not None and ggv.shape[1] != 3:
+    raise ValueError("ggv diagram must consist of the three columns [vx, ax_max, ay_max]!")
+
+# check size of mu
+if mu is not None and kappa.size != mu.size:
+    raise ValueError("kappa and mu must have the same length!")
+
+# check size of kappa and element lengths
+if closed and kappa.size != el_lengths.size:
+    raise ValueError("kappa and el_lengths must have the same length if closed!")
+
+elif not closed and kappa.size != el_lengths.size + 1:
+    raise ValueError("kappa must have the length of el_lengths + 1 if unclosed!")
+
+# check start and end velocities
+if not closed and v_start is None:
+    raise ValueError("v_start must be provided for the unclosed case!")
+
+if v_start is not None and v_start < 0.0:
+    v_start = 0.0
+    print('WARNING: Input v_start was < 0.0. Using v_start = 0.0 instead!')
+    # 用于开环，起点速度
+
+if v_end is not None and v_end < 0.0:
+    v_end = 0.0
+    print('WARNING: Input v_end was < 0.0. Using v_end = 0.0 instead!')
+    # 用于开环，终点速度
+
+# check dyn_model_exp
+if not 1.0 <= dyn_model_exp <= 2.0:
+    print('WARNING: Exponent for the vehicle dynamics model should be in the range [1.0, 2.0]!')
+
+# check shape of ax_max_machines
+if ax_max_machines.shape[1] != 2:
+    raise ValueError("ax_max_machines must consist of the two columns [vx, ax_max_machines]!")
+
+# check v_max
+if v_max is None:
+    if ggv is None:
+        raise ValueError("v_max must be supplied if ggv is None!")
+    else:
+        v_max = min(ggv[-1, 0], ax_max_machines[-1, 0])
+
+else:
+    # check if ggv covers velocity until v_max
+    if ggv is not None and ggv[-1, 0] < v_max:
+        raise ValueError("ggv has to cover the entire velocity range of the car (i.e. >= v_max)!")
+
+    # check if ax_max_machines covers velocity until v_max
+    if ax_max_machines[-1, 0] < v_max:
+        raise ValueError("ax_max_machines has to cover the entire velocity range of the car (i.e. >= v_max)!")
+
+# ------------------------------------------------------------------------------------------------------------------
+# BRINGING GGV OR LOC_GG INTO SHAPE FOR EQUAL HANDLING AFTERWARDS --------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+
+"""For an equal/easier handling of every case afterwards we bring all cases into a form where the local ggv is made
+available for every waypoint, i.e. [ggv_0, ggv_1, ggv_2, ...] -> we have a three dimensional array p_ggv (path_ggv)
+where the first dimension is the waypoint, the second is the velocity and the third is the two acceleration columns
+-> DIM = NO_WAYPOINTS_CLOSED x NO_VELOCITY ENTRIES x 3"""
+
+# CASE 1: ggv supplied -> copy it for every waypoint
+if ggv is not None:
+    p_ggv = np.repeat(np.expand_dims(ggv, axis=0), kappa.size, axis=0)
+    op_mode = 'ggv'
+
+# CASE 2: local gg diagram supplied -> add velocity dimension (artificial velocity of 10.0 m/s)
+else:
+    p_ggv = np.expand_dims(np.column_stack((np.ones(loc_gg.shape[0]) * 10.0, loc_gg)), axis=1)
+    op_mode = 'loc_gg'
+
+# ------------------------------------------------------------------------------------------------------------------
+# SPEED PROFILE CALCULATION (FB) -----------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+
+# transform curvature kappa into corresponding radii (abs because curvature has a sign in our convention)
+radii = np.abs(np.divide(1.0, kappa, out=np.full(kappa.size, np.inf), where=kappa != 0.0))
+
+# call solver
+if not closed:
+    vx_profile = __solver_fb_unclosed(p_ggv=p_ggv,
+                                        ax_max_machines=ax_max_machines,
+                                        v_max=v_max,
+                                        radii=radii,
+                                        el_lengths=el_lengths,
+                                        mu=mu,
+                                        v_start=v_start,
+                                        v_end=v_end,
+                                        dyn_model_exp=dyn_model_exp,
+                                        drag_coeff=drag_coeff,
+                                        m_veh=m_veh,
+                                        op_mode=op_mode)
+
+else:
+    print('close track velocity mode')
+    # use real code replace function for debug
+    no_points = radii.size
+
+    # handle mu
+    if mu is None:
+        mu = np.ones(no_points)
+        mu_mean = 1.0
+    else:
+        mu_mean = np.mean(mu)
+
+    # run through all the points and check for possible lateral acceleration
+    if op_mode == 'ggv':
+        # in ggv mode all ggvs are equal -> we can use the first one
+        ay_max_global = mu_mean * np.amin(p_ggv[0, :, 2])   # get first lateral acceleration estimate, 地面许用最大侧向加速度
+        vx_profile = np.sqrt(ay_max_global * radii)         # get first velocity estimate (radii must be positive!), 许用最大侧向加速度得到的许用最大速度
+
+        ay_max_curr = mu * np.interp(vx_profile, p_ggv[0, :, 0], p_ggv[0, :, 2]) #当前实际许用最大加速度
+        vx_profile = np.sqrt(np.multiply(ay_max_curr, radii))
+
+    else:
+        # in loc_gg mode all ggvs consist of a single line due to the missing velocity dependency, mu is None in this
+        # case
+        vx_profile = np.sqrt(p_ggv[:, 0, 2] * radii)        # get first velocity estimate (radii must be positive!)
+
+    # cut vx_profile to car's top speed
+    vx_profile[vx_profile > v_max] = v_max
+
+    # temporary fix connection issue
+    if vx_profile[5] == v_max and vx_profile[-5]==v_max:
+        vx_profile[:5] = v_max
+        vx_profile[-5:] = v_max
+
+    """We need to calculate the speed profile for two laps to get the correct starting and ending velocity."""
+    plt.subplot(2,1,1)
+    plt.plot(vx_profile)
+
+    # double arrays 数组拼接，因为需要两圈
+    vx_profile_double = np.concatenate((vx_profile, vx_profile), axis=0) 
+    radii_double = np.concatenate((radii, radii), axis=0)
+    el_lengths_double = np.concatenate((el_lengths, el_lengths), axis=0)
+    mu_double = np.concatenate((mu, mu), axis=0)
+    p_ggv_double = np.concatenate((p_ggv, p_ggv), axis=0)
+
+    plt.subplot(2,1,2)
+    plt.plot(vx_profile_double)
+    # calculate acceleration profile 正向加速度限制计算
+    vx_profile_double = __solver_fb_acc_profile(p_ggv=p_ggv_double,
+                                                ax_max_machines=ax_max_machines,
+                                                v_max=v_max,
+                                                radii=radii_double,
+                                                el_lengths=el_lengths_double,
+                                                mu=mu_double,
+                                                vx_profile=vx_profile_double,
+                                                backwards=False,
+                                                dyn_model_exp=dyn_model_exp,
+                                                drag_coeff=drag_coeff,
+                                                m_veh=m_veh)
+    plt.plot(vx_profile_double)
+
+    # use second lap of acceleration profile
+    vx_profile_double = np.concatenate((vx_profile_double[no_points:], vx_profile_double[no_points:]), axis=0)
+
+    plt.plot(vx_profile_double)
+
+    # calculate deceleration profile 减速度限制计算
+    vx_profile_double = __solver_fb_acc_profile(p_ggv=p_ggv_double,
+                                                ax_max_machines=ax_max_machines,
+                                                v_max=v_max,
+                                                radii=radii_double,
+                                                el_lengths=el_lengths_double,
+                                                mu=mu_double,
+                                                vx_profile=vx_profile_double,
+                                                backwards=True,
+                                                dyn_model_exp=dyn_model_exp,
+                                                drag_coeff=drag_coeff,
+                                                m_veh=m_veh)
+    plt.plot(vx_profile_double)
+    plt.legend(['Init','After Acc','Use Acc twice','After Dec'])
+    # bug 出现在init（蓝色线）上，即链接处的速度非常低导致在连接处制动
+    plt.show()
+
+    # use second lap of deceleration profile
+    vx_profile = vx_profile_double[no_points:]
+
+# ------------------------------------------------------------------------------------------------------------------
+# POSTPROCESSING ---------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+
+if filt_window is not None:
+    vx_profile = trajectory_planning_helpers.conv_filt.conv_filt(signal=vx_profile,
+                                                                    filt_window=filt_window,
+                                                                    closed=closed)
+
+# Review Result
+plt.subplot(2,1,1)
+plt.plot(vx_profile)
+plt.subplot(2,1,2)
+plt.plot(kappa)
+plt.show()

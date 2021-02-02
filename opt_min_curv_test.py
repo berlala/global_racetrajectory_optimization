@@ -57,12 +57,12 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 #------------------------------------------------------------------------------------------------------
 start_index = 50
 end_index = 600
-reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
-#reftrack=reftrack_imp #原始闭环轨迹
+#reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
+reftrack=reftrack_imp #原始闭环轨迹
 #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
 reftrack_interp = reftrack  #不进行近似处理
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
 
 ##Show the original track 
 #plt.plot(reftrack[:,0],reftrack[:,1])
@@ -88,9 +88,6 @@ else:
     print("The track is NOT closed.")
 
 #print("The track is closed? " +str(closed))
-
-
-
 
 #reftrack_interp, coeffs_y, A, coeffs_x, coeffs_y = helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack,
 #                                                reg_smooth_opts=pars["reg_smooth_opts"],
@@ -520,6 +517,9 @@ print(np.size(t_values_raceline_interp)) #t的总长度，t为1维,0<t<1
 psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs_x_raceline,
                       coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
                       t_spls=t_values_raceline_interp)
+
+# 保存中间结果 
+np.savez('kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl )
 
 #print('== == kappa size == ==')
 #print(np.size(kappa_opt))
