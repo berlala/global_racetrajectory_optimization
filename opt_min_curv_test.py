@@ -554,12 +554,14 @@ t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
                                                 ax_profile=ax_profile_opt,
                                                 el_lengths=el_lengths_raceline_interp_cl)
 
-# additional: 2015DSCC method
+# Additional: 2015DSCC method
 
 vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
                                                     el_lengths = el_lengths_raceline_interp_cl)
 plt.plot(s_raceline_interp, vx_profile_dscc)
 plt.plot(s_raceline_interp, vx_profile_opt)
+plt.xlabel('Distance[m]')
+plt.ylabel('Spd[m/s]')
 plt.show()
 
 # ------------------------------------------------------------------------------------------------------------------
