@@ -498,7 +498,7 @@ raceline_interp, spline_inds_raceline_interp, t_values_raceline_interp, s_raceli
                                     incl_last_point=False,
                                     stepsize_approx=1.0)
 
-print('==size of interp length ==')
+print('==size of interp raceline length ==')
 print(np.size(t_values_raceline_interp)) # size check ok
 
 # calculate element lengths
@@ -509,7 +509,7 @@ if closed is True:
 else:
     el_lengths_raceline_interp_cl = el_lengths_raceline_interp
 
-print("====t_values_raceline_interp===")
+print("====t_values_raceline_interp====")
 print(np.size(t_values_raceline_interp)) #t的总长度，t为1维,0<t<1
 #print(t_values_raceline_interp)
 
@@ -518,8 +518,8 @@ psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs
                       coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
                       t_spls=t_values_raceline_interp)
 
-# 保存中间结果 
-np.savez('kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl )
+# 保存轨迹作为中间结果 
+# np.savez('kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl )
 
 #print('== == kappa size == ==')
 #print(np.size(kappa_opt))
@@ -554,6 +554,13 @@ t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
                                                 ax_profile=ax_profile_opt,
                                                 el_lengths=el_lengths_raceline_interp_cl)
 
+# additional: 2015DSCC method
+
+vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
+                                                    el_lengths = el_lengths_raceline_interp_cl)
+plt.plot(s_raceline_interp, vx_profile_dscc)
+plt.plot(s_raceline_interp, vx_profile_opt)
+plt.show()
 
 # ------------------------------------------------------------------------------------------------------------------
 # RESULT and PLOT for Velocity -------------------------------------------------------------------------------------
@@ -585,8 +592,8 @@ plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
 sc = plt.scatter(raceline_interp[:,0],raceline_interp[:,1], s= 6, c = vx_profile_opt*3.6, cmap = cm)
-cbar = plt.colorbar(sc)
-cbar.set_label('Spd[km/h]')
+cbar = plt.colorbar(sc) #添加速度颜色条
+cbar.set_label('Spd[km/h]') # 颜色条的单位
 plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
 plt.xlabel("East[m]")
 plt.ylabel("North[m]")
