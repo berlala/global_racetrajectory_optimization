@@ -4,6 +4,9 @@
 [3] run  `pip3 install -r /path/to/requirements.txt`   
 [4] for OSX, make sure the [trajectory_planning_helpers] folder is in /user/anaconda3/lib/python3.7/site-packages  
 
+# Additional Data
+[1] kanel_cl.npz stores the kappa and section length data for Shanghai closed track
+
 # Introduction
 This repository contains algorithms that allow us to determine an optimal racing line on a race track. You can chose
 between several objectives:

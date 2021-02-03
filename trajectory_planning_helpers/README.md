@@ -6,6 +6,8 @@ not work properly on a common street network.
 
 This part of the code will NOT be imported as the running codes after setup process. The real running codes are in ./Lib/site-packages/trajectory_planning_helpers (for Anaconda envs).
 
+ANY additional function should be added into the import list in __init__.py, otherwise cannot be called.
+
 # List of components
 * `angle3pt`: Calculates angle by turning from a to c around b.
 * `calc_ax_profile`: Calculate the longitudinal acceleration profile for a given velocity profile.
