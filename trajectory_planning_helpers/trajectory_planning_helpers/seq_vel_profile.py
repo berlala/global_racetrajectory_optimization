@@ -2,7 +2,7 @@ import numpy as np
 import math  
 
 def seq_vel_profile(kappa: np.ndarray, 
-                    el_lengths: np.ndarray,) -> np.ndarray::
+                    el_lengths: np.ndarray,) -> np.ndarray:
 
     mu = 1.0 # constant mu
     grav = 9.8
