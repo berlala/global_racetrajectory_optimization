@@ -562,6 +562,7 @@ plt.plot(s_raceline_interp, vx_profile_dscc)
 plt.plot(s_raceline_interp, vx_profile_opt)
 plt.xlabel('Distance[m]')
 plt.ylabel('Spd[m/s]')
+plt.legend(['DSCC','Origin'])
 plt.show()
 
 # ------------------------------------------------------------------------------------------------------------------
