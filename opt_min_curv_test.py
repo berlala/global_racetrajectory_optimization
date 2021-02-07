@@ -43,7 +43,7 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
             "num_laps": 1}   
 
 file_paths = {"veh_params_file": "racecar.ini"}
-file_paths["track_name"] = "shanghai"    
+file_paths["track_name"] = "shanghai"    # berlin_2018 
 file_paths["module"] = os.path.dirname(os.path.abspath(__file__))
 file_paths["track_file"] = os.path.join(file_paths["module"], "inputs", "tracks", file_paths["track_name"] + ".csv")
 
@@ -519,7 +519,10 @@ psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs
                       t_spls=t_values_raceline_interp)
 
 # 保存轨迹作为中间结果 
-# np.savez('kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl )
+#np.savez('kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl,
+#                        raceline_x = result_x, raceline_y = result_y,
+#                        bond_up_x = bond_up_x, bond_up_y = bond_up_y,
+#                        bond_down_x =bond_down_x, bond_down_y = bond_down_y)
 
 #print('== == kappa size == ==')
 #print(np.size(kappa_opt))
