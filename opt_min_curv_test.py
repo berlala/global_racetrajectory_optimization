@@ -441,6 +441,8 @@ for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
     int_index = int_index+1
 
 raceline = np.asarray(raceline) # List转np.rray
+
+plt.figure(1)
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
@@ -448,12 +450,12 @@ plt.plot(result_x,result_y,linewidth=1.5)
 plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
 plt.xlabel("East[m]")
 plt.ylabel("North[m]")
-plt.title("Optimal Result")
+plt.title("Optimal Path Result")
 #plt.plot(track_x, track_y,'o') # track center points
 for i in range(len(track_x)):
     plt.plot([bond_down_x[i],track_x[i],bond_up_x[i]],[bond_down_y[i],track_y[i],bond_up_y[i]],'k--',linewidth=0.6)
 plt.axis('equal')
-plt.show()
+#plt.show()
 
 print('== == result waypoint num == ==')
 print(np.size(result_x))
@@ -558,15 +560,44 @@ t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
                                                 el_lengths=el_lengths_raceline_interp_cl)
 
 # Additional: 2015DSCC method
-
 vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
                                                     el_lengths = el_lengths_raceline_interp_cl)
+if closed is True:  
+    vx_profile_dscc_cl = np.append(vx_profile_dscc, vx_profile_dscc[0])
+else:
+    vx_profile_dscc_cl = vx_profile_dscc
+
+ax_profile_dscc = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_dscc_cl,
+                                                    el_lengths=el_lengths_raceline_interp_cl,
+                                                    eq_length_output=False)
+t_profile_dscc = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_dscc_cl,
+                                                ax_profile=ax_profile_dscc,
+                                                el_lengths=el_lengths_raceline_interp_cl)
+
+
+plt.figure(2)
+plt.subplot(2,1,1)
 plt.plot(s_raceline_interp, vx_profile_dscc)
 plt.plot(s_raceline_interp, vx_profile_opt)
 plt.xlabel('Distance[m]')
 plt.ylabel('Spd[m/s]')
 plt.legend(['DSCC','Origin'])
-plt.show()
+plt.title('Velocity Result Compare')
+plt.subplot(2,1,2)
+plt.plot(t_profile_dscc, vx_profile_dscc_cl)
+plt.plot(t_profile_cl, vx_profile_opt_cl)
+plt.xlabel('time[s]')
+plt.ylabel('Spd[m/s]')
+#plt.show()
+
+# == Lap Time == 
+laptime_origin_part = math.modf(max(t_profile_cl))
+laptime_dscc_part = math.modf(max(t_profile_dscc))
+
+print('Original Method Lap Time: '+ str(int(laptime_origin_part[1]/60)) + 'min' + 
+        str(int(laptime_origin_part[1]%60))+'sec'+str(int(1000*round(laptime_origin_part[0],3))))
+print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + 'min' + 
+        str(int(laptime_dscc_part[1]%60))+'sec'+str(int(1000*round(laptime_dscc_part[0],3))))
 
 # ------------------------------------------------------------------------------------------------------------------
 # RESULT and PLOT for Velocity -------------------------------------------------------------------------------------
@@ -575,15 +606,17 @@ plt.show()
 #print(np.size(vx_profile_opt_cl))
 #print(np.size(ax_profile_opt))
 
-
+# velcity result compare
+plt.figure(3)
 plt.subplot(2,1,1)
 plt.plot(t_profile_cl,vx_profile_opt_cl*3.6)
 plt.legend(['Velocity[km/h]'])
+plt.title('Velocity Detial')
 plt.subplot(2,1,2)
 plt.plot(t_profile_cl[:-1],ax_profile_opt)
 plt.legend(['Acc[m/s^2]'])
 plt.xlabel('time[s]')
-plt.show()
+#plt.show()
 
 # --------------------------------------------
 # Plot The Race Trajectory with Velocity Info
@@ -592,7 +625,7 @@ plt.show()
 #print('==check interp size == ')
 #print(np.size(raceline_interp[:,0]))
 #print(np.size(vx_profile_opt_cl))
-
+plt.figure(4)
 cm = plt.cm.get_cmap('RdYlBu')
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
