@@ -279,6 +279,6 @@ if __name__ == "__main__":
     plt.show()
 
     # 保存轨迹作为中间结果 
-    np.savez('shorest_cl.npz',raceline_x = result_x, raceline_y = result_y,
+    np.savez('outputs/shorest_cl.npz',raceline_x = result_x, raceline_y = result_y,
                             bond_up_x = bond_up_x, bond_up_y = bond_up_y,
                             bond_down_x =bond_down_x, bond_down_y = bond_down_y)   
