@@ -447,7 +447,7 @@ plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
 plt.plot(result_x,result_y,linewidth=1.5)
-plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
+plt.legend(['Track Center','Up Bound','Low Bound','Opt Res'])
 plt.xlabel("East[m]")
 plt.ylabel("North[m]")
 plt.title("Optimal Path Result")
@@ -594,10 +594,11 @@ plt.ylabel('Spd[m/s]')
 laptime_origin_part = math.modf(max(t_profile_cl))
 laptime_dscc_part = math.modf(max(t_profile_dscc))
 
-print('Original Method Lap Time: '+ str(int(laptime_origin_part[1]/60)) + 'min' + 
-        str(int(laptime_origin_part[1]%60))+'sec'+str(int(1000*round(laptime_origin_part[0],3))))
-print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + 'min' + 
-        str(int(laptime_dscc_part[1]%60))+'sec'+str(int(1000*round(laptime_dscc_part[0],3))))
+print('== == == Lap Time == == ==')
+print('Original Method Lap Time: '+ str(int(laptime_origin_part[1]/60)) + ' min ' + 
+        str(int(laptime_origin_part[1]%60))+' sec '+str(int(1000*round(laptime_origin_part[0],3))))
+print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' + 
+        str(int(laptime_dscc_part[1]%60))+' sec '+str(int(1000*round(laptime_dscc_part[0],3))))
 
 # ------------------------------------------------------------------------------------------------------------------
 # RESULT and PLOT for Velocity -------------------------------------------------------------------------------------
@@ -626,14 +627,14 @@ plt.xlabel('time[s]')
 #print(np.size(raceline_interp[:,0]))
 #print(np.size(vx_profile_opt_cl))
 plt.figure(4)
-cm = plt.cm.get_cmap('RdYlBu')
+cm = plt.cm.get_cmap('cool')
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
 sc = plt.scatter(raceline_interp[:,0],raceline_interp[:,1], s= 6, c = vx_profile_opt*3.6, cmap = cm)
 cbar = plt.colorbar(sc) #添加速度颜色条
 cbar.set_label('Spd[km/h]') # 颜色条的单位
-plt.legend(['Track Center','Up Bound','Down Bound','Opt Res'])
+plt.legend(['Track Center','Up Bound','Low Bound','Opt Res'])
 plt.xlabel("East[m]")
 plt.ylabel("North[m]")
 plt.title("Optimal Result with Speed")
