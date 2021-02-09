@@ -117,10 +117,12 @@ no_points = reftrack.shape[0]
 #print("===N Vectors===")
 #print(normvectors_refline)
 print("========")
-print("num of points")
+print("num of input track points")
 print(no_points)
-#print("norm vectors")
-#print(normvectors_refline.shape[0]) #注意normvector的方向，可能会莫名反向
+print("num of cl points")
+print(refpath_interp_cl.shape[0])
+print("num of norm vectors")
+print(normvectors_refline.shape[0]) #注意normvector的方向，可能会莫名反向
 print("========")
 
 
