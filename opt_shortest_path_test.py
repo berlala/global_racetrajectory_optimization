@@ -3,6 +3,9 @@ import math
 import quadprog
 import time
 import matplotlib.pyplot as plt
+import trajectory_planning_helpers as tph
+import helper_funcs_glob
+import os 
 
 
 def opt_shortest_path(reftrack: np.ndarray,
@@ -151,6 +154,93 @@ def opt_shortest_path(reftrack: np.ndarray,
     if print_debug:
         print("Solver runtime opt_shortest_path: " + "{:.3f}".format(time.perf_counter() - t_start) + "s")
 
+    return alpha_shpath #宽度方向上的位移
+
+
+# --------------testing ------------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+
+    w_veh = 2.5
+    print_debug = False
+
+    #Input Track
+    imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
+                "set_new_start": False,                 # set new starting point (changes order, not coordinates)
+                "new_start": np.array([0.0, -47.0]),    # [x_m, y_m], set new starting point
+                "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
+                "num_laps": 1}   
+    file_paths = {"veh_params_file": "racecar.ini"}
+    file_paths["track_name"] = "shanghai"    # berlin_2018 
+    file_paths["module"] = os.path.dirname(os.path.abspath(__file__))
+    file_paths["track_file"] = os.path.join(file_paths["module"], "inputs", "tracks", file_paths["track_name"] + ".csv")
+    reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
+                                                                file_path=file_paths["track_file"],
+                                                                width_veh=w_veh)
+
+    #-----相当于pre_track-----------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------
+    start_index = 50
+    end_index = 600
+    #reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
+    reftrack=reftrack_imp #原始闭环轨迹
+    #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
+    reftrack_interp = reftrack  #不进行近似处理
+    #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+    #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+    refpath_interp_cl = reftrack_interp
+
+    ##Show the original track 
+    #plt.plot(reftrack[:,0],reftrack[:,1])
+    #plt.axis('equal')
+    #plt.title('Original Track')
+    #plt.show()
+
+    #-----end of pre_track-----------------------------------------------------------------------------------
+    #--------------------------------------------------------------------------------------------------------
+
+    # check if path is closed 判断是否闭环
+    if np.all(np.isclose(refpath_interp_cl[0], refpath_interp_cl[-1])):
+        closed = True
+        psi_s = None
+        psi_e = None
+        print("The track is closed.")
+    else:
+        closed = False
+        psi_s = math.atan((refpath_interp_cl[1,1] - refpath_interp_cl[0,1])/(refpath_interp_cl[1,0] - refpath_interp_cl[0,0])) # 开环必须提供首尾航向角
+        psi_e = math.atan((refpath_interp_cl[-1,1] - refpath_interp_cl[-2,1])/(refpath_interp_cl[-1,0] - refpath_interp_cl[-2,0]))
+        #print(psi_s/math.pi*180)
+        #print(psi_e/math.pi*180)
+        print("The track is NOT closed.")
+
+    #print("The track is closed? " +str(closed))
+
+    [coeffs_x_refline, coeffs_y_refline, A, normvectors_refline] = tph.calc_splines.calc_splines(path = reftrack,el_lengths= None,
+                                            psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
+    #--------结束pretrack-------#
+
+    # The track cannot be straight
+    #reftrack = np.array([(0,-1,4,4),
+    #                     (2,2,4,4),
+    #                     (4,4,4,4),
+    #                     (6,6,4,4),
+    #                    (10,8,4,4),
+    #                    (15,8,4,4),
+    #                    (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
+    #normvectors = np.array([(0.7071,-0.7071),
+    #                    (0.7071,-0.7071),
+    #                    (0.7071,-0.7071),
+    #                    (0.7071,-0.7071),
+    #                    (0,-1),
+    #                    (0,-1),
+    #                    (0,-1)])  # 如何避免弯心处的坐标交汇的问题？？？
+
+    print(np.size(reftrack_interp,0))
+    print(np.size(normvectors_refline,0))   
+
+    ratio = opt_shortest_path(reftrack_interp[:-1],normvectors_refline,w_veh,print_debug)
+    #TODO如果使用calc_splines的结果,需要对丢掉reftrack最后一个点以保证等长
+    
+    # print (ratio) # positive is to right hand direction
     # Plot the final result on the global frame
     result_pos = []
     result_x = []
@@ -162,8 +252,8 @@ def opt_shortest_path(reftrack: np.ndarray,
     bond_down_x = []
     bond_down_y = []
     int_index = 0
-    for i in alpha_shpath:
-        vec = normvectors[int_index]
+    for i in ratio:
+        vec = normvectors_refline[int_index]
         base = reftrack[int_index]
         track_x.append(base[0])
         track_y.append(base[1])
@@ -174,41 +264,21 @@ def opt_shortest_path(reftrack: np.ndarray,
         bond_down_y.append(base[1] + vec[1]*+1*base[2])
 
         result_x.append(vec[0]*i + base[0])
-        result_y.append(vec[1]*i + base[1])
+        result_y.append(vec[1]*i + base[1
+        ])
 
         int_index = int_index+1
     #plt.plot(reftrack[:,0],reftrack[:,1])
-    plt.plot(track_x, track_y)
+    plt.plot(track_x, track_y,'--',linewidth=0.6)
     plt.plot(bond_up_x, bond_up_y)
     plt.plot(bond_down_x, bond_down_y)
     plt.plot(result_x,result_y)
-    plt.legend(['track center','Up','Down','Opt Res'])
+    plt.legend(['Track Center','Up','Low','Shortest Res'])
+    plt.title('Shortest Result')
     plt.axis('equal')
     plt.show()
 
-    return alpha_shpath #宽度方向上的位移
-
-
-# testing --------------------------------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    w_veh = 2.5
-    print_debug = False
-    # The track cannot be straight
-    reftrack = np.array([(0,-1,4,4),
-                         (2,2,4,4),
-                         (4,4,4,4),
-                         (6,6,4,4),
-                        (10,8,4,4),
-                        (15,8,4,4),
-                        (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
-    normvectors = np.array([(0.7071,-0.7071),
-                        (0.7071,-0.7071),
-                        (0.7071,-0.7071),
-                        (0.7071,-0.7071),
-                        (0,-1),
-                        (0,-1),
-                        (0,-1)])  # 如何避免弯心处的坐标交汇的问题？？？
-    #print(reftrack)
-    #print(normvectors)   
-    ratio = opt_shortest_path(reftrack,normvectors,w_veh,print_debug)
-    print (ratio) # positive is to right hand direction
+    # 保存轨迹作为中间结果 
+    np.savez('shorest_cl.npz',raceline_x = result_x, raceline_y = result_y,
+                            bond_up_x = bond_up_x, bond_up_y = bond_up_y,
+                            bond_down_x =bond_down_x, bond_down_y = bond_down_y)   
