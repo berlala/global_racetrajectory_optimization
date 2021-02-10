@@ -186,14 +186,14 @@ if __name__ == "__main__":
     #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
     reftrack_interp = reftrack  #不进行近似处理
     #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-    #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
-    refpath_interp_cl = reftrack_interp
+    refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
 
-    ##Show the original track 
-    #plt.plot(reftrack[:,0],reftrack[:,1])
-    #plt.axis('equal')
-    #plt.title('Original Track')
-    #plt.show()
+    #Show the original track 
+    # plt.figure(9)
+    # plt.plot(reftrack[:,0],reftrack[:,1])
+    # plt.axis('equal')
+    # plt.title('Original Track')
+    # plt.show()
 
     #-----end of pre_track-----------------------------------------------------------------------------------
     #--------------------------------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ if __name__ == "__main__":
 
     #print("The track is closed? " +str(closed))
 
-    [coeffs_x_refline, coeffs_y_refline, A, normvectors_refline] = tph.calc_splines.calc_splines(path = reftrack,el_lengths= None,
+    [coeffs_x_refline, coeffs_y_refline, A, normvectors_refline] = tph.calc_splines.calc_splines(path = refpath_interp_cl,el_lengths= None,
                                             psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
     #--------结束pretrack-------#
 
@@ -237,8 +237,7 @@ if __name__ == "__main__":
     print(np.size(reftrack_interp,0))
     print(np.size(normvectors_refline,0))   
 
-    ratio = opt_shortest_path(reftrack_interp[:-1],normvectors_refline,w_veh,print_debug)
-    #TODO如果使用calc_splines的结果,需要对丢掉reftrack最后一个点以保证等长
+    ratio = opt_shortest_path(reftrack_interp,normvectors_refline,w_veh,print_debug)
     
     # print (ratio) # positive is to right hand direction
     # Plot the final result on the global frame
@@ -252,6 +251,7 @@ if __name__ == "__main__":
     bond_down_x = []
     bond_down_y = []
     int_index = 0
+    raceline = []
     for i in ratio:
         vec = normvectors_refline[int_index]
         base = reftrack[int_index]
@@ -264,21 +264,182 @@ if __name__ == "__main__":
         bond_down_y.append(base[1] + vec[1]*+1*base[2])
 
         result_x.append(vec[0]*i + base[0])
-        result_y.append(vec[1]*i + base[1
-        ])
+        result_y.append(vec[1]*i + base[1])
+        raceline.append([result_x[-1],result_y[-1]])
 
         int_index = int_index+1
-    #plt.plot(reftrack[:,0],reftrack[:,1])
+        
+    raceline = np.asarray(raceline) # List转np.rray
+
+    # plt.figure(1) # 图1.轨迹结果
+    # #plt.plot(reftrack[:,0],reftrack[:,1])
+    # plt.plot(track_x, track_y,'--',linewidth=0.6)
+    # plt.plot(bond_up_x, bond_up_y)
+    # plt.plot(bond_down_x, bond_down_y)
+    # plt.plot(result_x,result_y)
+    # plt.legend(['Track Center','Up','Low','Shortest Res'])
+    # plt.title('Shortest Result')
+    # plt.axis('equal')
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # CALCULATE SPEED --------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # 基于优化结果alpha构建赛车线，将其处理成与refline一致的格式
+    #psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs_x_opt,
+    #                      coeffs_y=coeffs_y_opt,
+    #                      ind_spls=spline_inds_opt_interp,
+    #                      t_spls=t_vals_opt_interp)
+
+    #-----相当于pre_track-----------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------
+    raceline_interp = raceline  #不进行近似处理
+    if closed is True:
+        raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], raceline_interp[0,0:2]))  #闭环，使收尾相等
+    else:
+        raceline_interp_interp_cl = np.vstack((raceline_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
+
+    #-----end of pre_track-----------------------------------------------------------------------------------
+    #--------------------------------------------------------------------------------------------------------
+
+    #对raceline,重新进行样条曲线拟合处理，获取参数
+    [coeffs_x_raceline, coeffs_y_raceline, A, normvectors_raceline] = tph.calc_splines.calc_splines(path = raceline_interp_interp_cl,el_lengths= None,
+                                            psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
+
+    # calculate new spline lengths
+    spline_lengths_raceline = tph.calc_spline_lengths.calc_spline_lengths(coeffs_x=coeffs_x_raceline,
+                            coeffs_y=coeffs_y_raceline)
+    print('==size of origin spline length ==')
+    print(np.size(spline_lengths_raceline)) # size check ok
+
+
+    # interpolate splines for evenly spaced raceline points
+    raceline_interp, spline_inds_raceline_interp, t_values_raceline_interp, s_raceline_interp = tph.\
+        interp_splines.interp_splines(spline_lengths=spline_lengths_raceline,
+                                        coeffs_x=coeffs_x_raceline,
+                                        coeffs_y=coeffs_y_raceline,
+                                        incl_last_point=False,
+                                        stepsize_approx=1.0)
+
+    print('==size of interp raceline length ==')
+    print(np.size(t_values_raceline_interp)) # size check ok
+
+    # calculate element lengths
+    s_tot_raceline = float(np.sum(spline_lengths_raceline))
+    el_lengths_raceline_interp = np.diff(s_raceline_interp)
+    if closed is True:
+        el_lengths_raceline_interp_cl = np.append(el_lengths_raceline_interp, s_tot_raceline - s_raceline_interp[-1])
+    else:
+        el_lengths_raceline_interp_cl = el_lengths_raceline_interp
+
+    print("====t_values_raceline_interp====")
+    print(np.size(t_values_raceline_interp)) #t的总长度，t为1维,0<t<1
+    #print(t_values_raceline_interp)
+
+    # calculate heading and curvature, 对生成的raceline,计算各点的航向和曲率
+    psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs_x_raceline,
+                        coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
+                        t_spls=t_values_raceline_interp)
+
+    # 保存轨迹作为中间结果 
+    #np.savez('outputs/kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl,
+    #                        raceline_x = result_x, raceline_y = result_y,
+    #                        bond_up_x = bond_up_x, bond_up_y = bond_up_y,
+    #                        bond_down_x =bond_down_x, bond_down_y = bond_down_y)
+
+    #print('== == kappa size == ==')
+    #print(np.size(kappa_opt))
+
+    ggv, ax_max_machines = tph.import_veh_dyn_info.\
+        import_veh_dyn_info(ggv_import_path='./inputs/veh_dyn_info/ggv.csv',
+                            ax_max_machines_import_path='./inputs/veh_dyn_info/ax_max_machines.csv')
+
+    vx_profile_opt = tph.calc_vel_profile.calc_vel_profile(ggv=ggv,
+                            ax_max_machines=ax_max_machines,
+                            v_max=70,
+                            kappa=kappa_opt,
+                            el_lengths=el_lengths_raceline_interp_cl,
+                            closed=closed,
+                            dyn_model_exp=1.0,
+                            drag_coeff=0.75,
+                            v_start = 20,
+                            m_veh=1200)
+
+    # calculate longitudinal acceleration profile
+    if closed is True:  
+        vx_profile_opt_cl = np.append(vx_profile_opt, vx_profile_opt[0])
+    else:
+        vx_profile_opt_cl = vx_profile_opt
+
+    ax_profile_opt = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_opt_cl,
+                                                        el_lengths=el_lengths_raceline_interp_cl,
+                                                        eq_length_output=False)
+
+    # calculate laptime
+    t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
+                                                    ax_profile=ax_profile_opt,
+                                                    el_lengths=el_lengths_raceline_interp_cl)
+
+    # Additional: 2015DSCC method
+    #TODO kappa_opt 比 el_lengths多一个
+    el_lengths_raceline_interp_fix_unclosed= np.append(el_lengths_raceline_interp,el_lengths_raceline_interp[-1] )
+    vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
+                                                         el_lengths = el_lengths_raceline_interp_fix_unclosed)
+    if closed is True:  
+        vx_profile_dscc_cl = np.append(vx_profile_dscc, vx_profile_dscc[0])
+    else:
+        vx_profile_dscc_cl = vx_profile_dscc
+            
+    ax_profile_dscc = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_dscc_cl,
+                                                        el_lengths=el_lengths_raceline_interp_cl,
+                                                        eq_length_output=False)
+    t_profile_dscc = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_dscc_cl,
+                                                    ax_profile=ax_profile_dscc,
+                                                    el_lengths=el_lengths_raceline_interp_cl)
+    # ----------------- End of DSCC --------------------
+
+    plt.figure(2)  #速度分析
+    plt.subplot(2,1,1)
+    plt.plot(s_raceline_interp, vx_profile_dscc)
+    plt.plot(s_raceline_interp, vx_profile_opt)
+    plt.xlabel('Distance[m]')
+    plt.ylabel('Spd[m/s]')
+    plt.legend(['DSCC','Origin'])
+    plt.title('Velocity Result Compare')
+    plt.subplot(2,1,2)
+    plt.plot(t_profile_dscc, vx_profile_dscc_cl)
+    plt.plot(t_profile_cl, vx_profile_opt_cl)
+    plt.xlabel('time[s]')
+    plt.ylabel('Spd[m/s]')
+
+    # == Lap Time == 
+    laptime_origin_part = math.modf(max(t_profile_cl))
+    laptime_dscc_part = math.modf(max(t_profile_dscc))
+
+    print('== == == Lap Time == == ==')
+    print('Original Method Lap Time: '+ str(int(laptime_origin_part[1]/60)) + ' min ' + 
+            str(int(laptime_origin_part[1]%60))+' sec '+str(int(1000*round(laptime_origin_part[0],3))))
+    print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' + 
+            str(int(laptime_dscc_part[1]%60))+' sec '+str(int(1000*round(laptime_dscc_part[0],3))))
+
+    plt.figure(3)  # 轨迹线带速度信息
+    cm = plt.cm.get_cmap('cool')
     plt.plot(track_x, track_y,'--',linewidth=0.6)
     plt.plot(bond_up_x, bond_up_y)
     plt.plot(bond_down_x, bond_down_y)
-    plt.plot(result_x,result_y)
-    plt.legend(['Track Center','Up','Low','Shortest Res'])
-    plt.title('Shortest Result')
+    sc = plt.scatter(raceline_interp[:,0],raceline_interp[:,1], s= 6, c = vx_profile_opt*3.6, cmap = cm)
+    cbar = plt.colorbar(sc) #添加速度颜色条
+    cbar.set_label('Spd[km/h]') # 颜色条的单位
+    plt.legend(['Track Center','Up Bound','Low Bound','Opt Res'])
+    plt.xlabel("East[m]")
+    plt.ylabel("North[m]")
+    plt.title("Optimal Result with Speed")
     plt.axis('equal')
     plt.show()
 
-    # 保存轨迹作为中间结果 
+
+    # 保存轨迹和速度结果 
     np.savez('outputs/shorest_cl.npz',raceline_x = result_x, raceline_y = result_y,
                             bond_up_x = bond_up_x, bond_up_y = bond_up_y,
-                            bond_down_x =bond_down_x, bond_down_y = bond_down_y)   
+                            bond_down_x =bond_down_x, bond_down_y = bond_down_y,
+                            vx_profile_opt = vx_profile_opt)   
