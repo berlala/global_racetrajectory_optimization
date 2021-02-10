@@ -522,11 +522,6 @@ psi_vel_opt, kappa_opt = tph.calc_head_curv_an.calc_head_curv_an(coeffs_x=coeffs
                       coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
                       t_spls=t_values_raceline_interp)
 
-# 保存轨迹作为中间结果 
-#np.savez('outputs/kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl,
-#                        raceline_x = result_x, raceline_y = result_y,
-#                        bond_up_x = bond_up_x, bond_up_y = bond_up_y,
-#                        bond_down_x =bond_down_x, bond_down_y = bond_down_y)
 
 #print('== == kappa size == ==')
 #print(np.size(kappa_opt))
@@ -575,7 +570,7 @@ ax_profile_dscc = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_dscc
 t_profile_dscc = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_dscc_cl,
                                                 ax_profile=ax_profile_dscc,
                                                 el_lengths=el_lengths_raceline_interp_cl)
-
+# -----End of DSCC --------
 
 plt.figure(2)
 plt.subplot(2,1,1)
@@ -628,7 +623,7 @@ plt.xlabel('time[s]')
 #print('==check interp size == ')
 #print(np.size(raceline_interp[:,0]))
 #print(np.size(vx_profile_opt_cl))
-plt.figure(4)
+plt.figure(4)  # 轨迹线带速度信息
 cm = plt.cm.get_cmap('cool')
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
@@ -642,3 +637,10 @@ plt.ylabel("North[m]")
 plt.title("Optimal Result with Speed")
 plt.axis('equal')
 plt.show()
+
+# 保存最小曲率法结果 
+np.savez('outputs/kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl,
+                       raceline_x = result_x, raceline_y = result_y,
+                       bond_up_x = bond_up_x, bond_up_y = bond_up_y,
+                       bond_down_x =bond_down_x, bond_down_y = bond_down_y,
+                       vx_profile_opt = vx_profile_opt)
