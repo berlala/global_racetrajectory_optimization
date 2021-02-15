@@ -508,6 +508,8 @@ if lap_time_mat_opts["use_lap_time_mat"]:
     # store lap time matrix to file
     np.savetxt(file_paths["lap_time_mat_export"], lap_time_matrix, delimiter=",", fmt="%.3f")
 
+np.savetxt('outputs/t_profile_cl.csv', t_profile_cl, delimiter=",", fmt="%.3f")
+
 # ----------------------------------------------------------------------------------------------------------------------
 # DATA POSTPROCESSING --------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------

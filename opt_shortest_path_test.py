@@ -341,12 +341,6 @@ if __name__ == "__main__":
                         coeffs_y=coeffs_y_raceline,ind_spls=spline_inds_raceline_interp,
                         t_spls=t_values_raceline_interp)
 
-    # 保存轨迹作为中间结果 
-    #np.savez('outputs/kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline_interp_cl,
-    #                        raceline_x = result_x, raceline_y = result_y,
-    #                        bond_up_x = bond_up_x, bond_up_y = bond_up_y,
-    #                        bond_down_x =bond_down_x, bond_down_y = bond_down_y)
-
     #print('== == kappa size == ==')
     #print(np.size(kappa_opt))
 
@@ -442,4 +436,4 @@ if __name__ == "__main__":
     np.savez('outputs/shorest_cl.npz',raceline_x = result_x, raceline_y = result_y,
                             bond_up_x = bond_up_x, bond_up_y = bond_up_y,
                             bond_down_x =bond_down_x, bond_down_y = bond_down_y,
-                            vx_profile_opt = vx_profile_opt)   
+                            vx_profile_opt = vx_profile_opt, t_profile_cl = t_profile_cl)   

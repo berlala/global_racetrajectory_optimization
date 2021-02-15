@@ -1,5 +1,5 @@
 numpy>=1.18.1
-matplotlib>=3.3.1
+matplotlib>=3.0.1
 trajectory_planning_helpers>=0.67
 # the following is required for minimum time optimization only
 casadi>=3.5.1
