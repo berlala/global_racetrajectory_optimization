@@ -102,8 +102,8 @@ else:
 print_debug = False;
 plot_debug = False;
 
-kappa_bound = 0.2;
-w_veh = 2.0;
+kappa_bound = 0.2; #车辆转向曲率限制
+w_veh = 2.5;
 
 # ------------------------------------------------------------------------------------------------------------------
 # PREPARATIONS -----------------------------------------------------------------------------------------------------
@@ -643,4 +643,4 @@ np.savez('outputs/kanel_cl.npz',kappa=kappa_opt,el_lengths = el_lengths_raceline
                        raceline_x = result_x, raceline_y = result_y,
                        bond_up_x = bond_up_x, bond_up_y = bond_up_y,
                        bond_down_x =bond_down_x, bond_down_y = bond_down_y,
-                       vx_profile_opt = vx_profile_opt)
+                       vx_profile_opt = vx_profile_opt, t_profile_cl = t_profile_cl)
