@@ -1,11 +1,13 @@
 # QuickStart
-[1] make sure python 3.7 is used  
+[1] make sure python 3.X is used  
 [2] check dependency  
 [3] run  `pip3 install -r /path/to/requirements.txt`   
-[4] for OSX, make sure the [trajectory_planning_helpers] folder is in /user/anaconda3/lib/python3.7/site-packages  
+[4] for Anaconda, make sure the [trajectory_planning_helpers] folder is in /user/anaconda3/lib/python3.X/site-packages  
 
-# Additional Data
-[1] kanel_cl.npz stores the kappa and section length data for Shanghai closed track
+# Additional Data 
+[1] kanel_cl.npz stores the kappa,section length and velocity data for Shanghai closed track;  
+[2] shorest_cl.npz stores the kappa,section length and velocity data for Shanghai closed track;  
+[3] shanghai_ctcc.npz stores a CTCC car lap time speed info;   
 
 # Introduction
 This repository contains algorithms that allow us to determine an optimal racing line on a race track. You can chose

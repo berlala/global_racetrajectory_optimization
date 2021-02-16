@@ -48,6 +48,11 @@ bond_uy = data['bond_up_y']
 bond_dx = data['bond_down_x']
 bond_dy = data['bond_down_y']
 
+# Result 3: Shanghai Velocity
+data = np.load('outputs/shanghai_ctcc.npz')
+t_ctcc = data['t']
+spd_ctcc_kmh = data['spd_kmh']
+
 #Plot Result
 plt.figure(1)
 plt.plot(res_x,res_y)
@@ -59,10 +64,11 @@ plt.axis('equal')
 plt.legend(['Origianl','New Curv','Shortest'])
 
 plt.figure(2)
-plt.plot(t_org, vel_org)
-plt.plot(t_crv[:-1],vel_crv)
-plt.plot(t_sht[:-1],vel_sht)
-plt.legend(['Origianl','New Curv','Shortest'])
+plt.plot(t_org, np.multiply(vel_org,3.6))
+plt.plot(t_crv[:-1],np.multiply(vel_crv,3.6))
+plt.plot(t_sht[:-1],np.multiply(vel_sht,3.6))
+plt.plot(t_ctcc[30:]-t_ctcc[30], spd_ctcc_kmh[30:])
+plt.legend(['Origianl','New Curv','Shortest','CTCC'])
 plt.xlabel('Time[s]')
-plt.ylabel('Spd[m/s]')
+plt.ylabel('Spd[km/h]')
 plt.show()
