@@ -653,7 +653,7 @@ cbar.set_label('Spd[km/h]') # 颜色条的单位
 plt.legend(['Track Center','Up Bound','Low Bound','Opt Res'])
 plt.xlabel("East[m]")
 plt.ylabel("North[m]")
-plt.title("Optimal Result with Speed")
+plt.title("Optimal Result with Speed for Min Curv")
 plt.axis('equal')
 plt.show()
 
