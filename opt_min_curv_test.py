@@ -57,12 +57,12 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 #------------------------------------------------------------------------------------------------------
 start_index = 50
 end_index = 600
-#reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
-reftrack=reftrack_imp #原始闭环轨迹
-#reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
-reftrack_interp = reftrack  #不进行近似处理
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
+#reftrack=reftrack_imp[start_index:end_index,:] #[1]截取开环轨迹
+reftrack=reftrack_imp #[1]原始闭环轨迹
+#reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #[2]进行近似处理，注意spline_approximation会强行闭环
+reftrack_interp = reftrack  #[2]不进行近似处理
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # [3]开环,补全最后一个
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  # [3]闭环，使收尾相等
 
 ##Show the original track 
 #plt.plot(reftrack[:,0],reftrack[:,1])
@@ -87,8 +87,6 @@ else:
     #print(psi_e/math.pi*180)
     print("The track is NOT closed.")
 
-#print("The track is closed? " +str(closed))
-
 #reftrack_interp, coeffs_y, A, coeffs_x, coeffs_y = helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack,
 #                                                reg_smooth_opts=pars["reg_smooth_opts"],
 #                                                stepsize_opts=pars["stepsize_opts"],
@@ -97,10 +95,12 @@ else:
 
 [coeffs_x_refline, coeffs_y_refline, A, normvectors_refline] = tph.calc_splines.calc_splines(path = refpath_interp_cl,el_lengths= None,
                                         psi_s= psi_s, psi_e= psi_e,use_dist_scaling=False)
+# Spline: x(t) = a + bt + ct^2 + dt^3
+# 获得组成赛道的所有splines的x,y系数值(待定系数a,b,c,d)，spline固定系数矩阵A（待定系数前的，由导数关系得到的固定系数），法向量矩阵
 #--------结束pretrack-------#
 
 print_debug = False;
-plot_debug = False;
+plot_debug = True; #显示曲率
 
 kappa_bound = 0.2; #车辆转向曲率限制
 w_veh = 2.5;
@@ -124,7 +124,6 @@ print(refpath_interp_cl.shape[0])
 print("num of norm vectors")
 print(normvectors_refline.shape[0]) #注意normvector的方向，可能会莫名反向
 print("========")
-
 
 # check inputs
 if no_points != normvectors_refline.shape[0]:
@@ -395,12 +394,7 @@ for i in range(no_points):
                         / math.pow(math.pow(x_prime[i, i], 2) + math.pow(y_prime[i, i], 2), 1.5)
     curv_sol_lin[i] = (x_prime_tmp[i, i] * y_prime_prime[i] - y_prime_tmp[i, i] * x_prime_prime[i]) \
                         / math.pow(math.pow(x_prime_tmp[i, i], 2) + math.pow(y_prime_tmp[i, i], 2), 1.5)
-
-if plot_debug:
-    plt.plot(curv_orig_lin)
-    plt.plot(curv_sol_lin)
-    plt.legend(("original linearization", "solution based linearization"))
-    plt.show()
+#由参数方程曲率定义，Ref Paper[9]，获得连接处点的曲率
 
 # calculate maximum curvature error
 curv_error_max = np.amax(np.abs(curv_sol_lin - curv_orig_lin))
@@ -443,6 +437,8 @@ for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
     int_index = int_index+1
 
 raceline = np.asarray(raceline) # List转np.rray
+result_x = np.asarray(result_x) # 转array为散点彩图
+result_y = np.asarray(result_y)
 
 plt.figure(1)
 plt.plot(track_x, track_y,'--',linewidth=0.6)
@@ -457,7 +453,20 @@ plt.title("Optimal Path Result")
 for i in range(len(track_x)):
     plt.plot([bond_down_x[i],track_x[i],bond_up_x[i]],[bond_down_y[i],track_y[i],bond_up_y[i]],'k--',linewidth=0.6)
 plt.axis('equal')
+#Add Colored Scatter Points For Position Reference, 增加定位点用于Debug
+color_sample_size = int(20) 
+index_point_color  = np.multiply(np.array(range(math.floor(len(result_y)/color_sample_size))),color_sample_size)
+cValue = np.random.rand(len(index_point_color),3)
+plt.scatter(result_x[index_point_color], result_y[index_point_color], c=cValue,marker='s')
 #plt.show()
+
+if plot_debug:
+    plt.figure(9)
+    plt.plot(curv_orig_lin)
+    plt.plot(curv_sol_lin)
+    plt.scatter(index_point_color,curv_orig_lin[index_point_color], c=cValue,marker='s') # marker = squrare/x
+    plt.title('Curvature Review')
+    plt.legend(("original linearization", "solution based linearization"))
 
 print('== == result waypoint num == ==')
 print(np.size(result_x))
@@ -494,7 +503,7 @@ print('==size of origin spline length ==')
 print(np.size(spline_lengths_raceline)) # size check ok
 
 
-# interpolate splines for evenly spaced raceline points
+# interpolate splines for evenly spaced raceline points, 通过系数还原轨迹，此处操作会使index发生变化
 raceline_interp, spline_inds_raceline_interp, t_values_raceline_interp, s_raceline_interp = tph.\
     interp_splines.interp_splines(spline_lengths=spline_lengths_raceline,
                                     coeffs_x=coeffs_x_raceline,
@@ -610,6 +619,8 @@ plt.subplot(2,1,1)
 plt.plot(t_profile_cl,vx_profile_opt_cl*3.6)
 plt.legend(['Velocity[km/h]'])
 plt.title('Velocity Detial')
+extend_size = int(len(t_profile_cl)/len(result_x))
+plt.scatter(t_profile_cl[index_point_color*extend_size], vx_profile_opt_cl[index_point_color*extend_size]*3.6, c=cValue,marker='s') # marker = squrare/x
 plt.subplot(2,1,2)
 plt.plot(t_profile_cl[:-1],ax_profile_opt)
 plt.legend(['Acc[m/s^2]'])
