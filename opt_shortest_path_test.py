@@ -160,7 +160,7 @@ def opt_shortest_path(reftrack: np.ndarray,
 # --------------testing ------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    w_veh = 2.5
+    w_veh = 2.0
     print_debug = False
 
     #Input Track
@@ -183,8 +183,13 @@ if __name__ == "__main__":
     end_index = 600
     #reftrack=reftrack_imp[start_index:end_index,:] #截取开环轨迹
     reftrack=reftrack_imp #原始闭环轨迹
-    #reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #进行近似处理，注意spline_approximation会强行闭环
-    reftrack_interp = reftrack  #不进行近似处理
+    reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack,
+                                                                    k_reg= 3,
+                                                                    s_reg= 10,
+                                                                    stepsize_prep= 1.0,
+                                                                    stepsize_reg= 3.0,
+                                                                    debug=False)    #[2]进行近似处理，注意spline_approximation会强行闭环
+    #reftrack_interp = reftrack  #不进行近似处理
     #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # 开环,补全最后一个
     refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  #闭环，使收尾相等
 
@@ -254,7 +259,7 @@ if __name__ == "__main__":
     raceline = []
     for i in ratio:
         vec = normvectors_refline[int_index]
-        base = reftrack[int_index]
+        base = reftrack_interp[int_index]
         track_x.append(base[0])
         track_y.append(base[1])
 
@@ -427,7 +432,7 @@ if __name__ == "__main__":
     plt.legend(['Track Center','Up Bound','Low Bound','Opt Res'])
     plt.xlabel("East[m]")
     plt.ylabel("North[m]")
-    plt.title("Optimal Result with Speed")
+    plt.title("Optimal Result with Speed for Shortest Path")
     plt.axis('equal')
     plt.show()
 
