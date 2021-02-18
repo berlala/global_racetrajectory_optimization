@@ -59,8 +59,13 @@ start_index = 50
 end_index = 600
 #reftrack=reftrack_imp[start_index:end_index,:] #[1]截取开环轨迹
 reftrack=reftrack_imp #[1]原始闭环轨迹
-#reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack) #[2]进行近似处理，注意spline_approximation会强行闭环
-reftrack_interp = reftrack  #[2]不进行近似处理
+reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack,
+                                                                k_reg= 3,
+                                                                s_reg= 10,
+                                                                stepsize_prep= 1.0,
+                                                                stepsize_reg= 3.0,
+                                                                debug=False)    #[2]进行近似处理，注意spline_approximation会强行闭环
+#reftrack_interp = reftrack  #[2]不进行近似处理
 #refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # [3]开环,补全最后一个
 refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  # [3]闭环，使收尾相等
 
@@ -117,7 +122,7 @@ no_points = reftrack.shape[0]
 #print("===N Vectors===")
 #print(normvectors_refline)
 print("========")
-print("num of input track points")
+print("num of input track points(reftrack)")
 print(no_points)
 print("num of cl points")
 print(refpath_interp_cl.shape[0])
@@ -612,14 +617,16 @@ print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' +
 #print(np.size(t_profile_cl)) # debug for the size match for plot
 #print(np.size(vx_profile_opt_cl))
 #print(np.size(ax_profile_opt))
+#print(index_point_color)
 
 # velcity result compare
 fig,ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax1.plot(t_profile_cl,vx_profile_opt_cl*3.6)
 plt.title('Velocity Detial')
-extend_size = int(len(t_profile_cl)/len(result_x))
-ax1.scatter(t_profile_cl[index_point_color*extend_size], vx_profile_opt_cl[index_point_color*extend_size]*3.6, c=cValue,marker='s') # marker = squrare/x
+extend_size = len(t_profile_cl)/len(result_x) # 不能再此处转成整数，会造成较大错位
+#print(extend_size)
+ax1.scatter(t_profile_cl[(np.multiply(index_point_color,extend_size)).astype(np.int)], vx_profile_opt_cl[(np.multiply(index_point_color,extend_size)).astype(np.int)]*3.6, c=cValue,marker='s') # marker = squrare/x
 ax2.plot(t_profile_cl[:-1],ax_profile_opt,'k',linewidth=0.5)
 ax1.set_ylabel('Velocity[km/h]')
 ax2.set_ylabel('Acc[m/s^2]')
@@ -627,10 +634,11 @@ ax1.set_xlabel('time[s]')
 plt.legend(['Acc'])
 #plt.show()
 
+## 注意上图中不能用int(), math.floor()之类，而需要用.astype(np.int)进行类型转化。
+
 # --------------------------------------------
 # Plot The Race Trajectory with Velocity Info
 # --------------------------------------------
-
 #print('==check interp size == ')
 #print(np.size(raceline_interp[:,0]))
 #print(np.size(vx_profile_opt_cl))
