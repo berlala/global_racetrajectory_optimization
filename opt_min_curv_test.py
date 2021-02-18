@@ -103,7 +103,7 @@ print_debug = False;
 plot_debug = True; #显示曲率
 
 kappa_bound = 0.2; #车辆转向曲率限制
-w_veh = 2.5;
+w_veh = 2.0;
 
 # ------------------------------------------------------------------------------------------------------------------
 # PREPARATIONS -----------------------------------------------------------------------------------------------------
@@ -503,7 +503,7 @@ print('==size of origin spline length ==')
 print(np.size(spline_lengths_raceline)) # size check ok
 
 
-# interpolate splines for evenly spaced raceline points, 通过系数还原轨迹，此处操作会使index发生变化
+# interpolate splines for evenly spaced raceline points, 通过系数还原轨迹，此处操作会使index发生变化,减小stepsize_approx会使输出size变大
 raceline_interp, spline_inds_raceline_interp, t_values_raceline_interp, s_raceline_interp = tph.\
     interp_splines.interp_splines(spline_lengths=spline_lengths_raceline,
                                     coeffs_x=coeffs_x_raceline,
@@ -614,17 +614,17 @@ print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' +
 #print(np.size(ax_profile_opt))
 
 # velcity result compare
-plt.figure(3)
-plt.subplot(2,1,1)
-plt.plot(t_profile_cl,vx_profile_opt_cl*3.6)
-plt.legend(['Velocity[km/h]'])
+fig,ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax1.plot(t_profile_cl,vx_profile_opt_cl*3.6)
 plt.title('Velocity Detial')
 extend_size = int(len(t_profile_cl)/len(result_x))
-plt.scatter(t_profile_cl[index_point_color*extend_size], vx_profile_opt_cl[index_point_color*extend_size]*3.6, c=cValue,marker='s') # marker = squrare/x
-plt.subplot(2,1,2)
-plt.plot(t_profile_cl[:-1],ax_profile_opt)
-plt.legend(['Acc[m/s^2]'])
-plt.xlabel('time[s]')
+ax1.scatter(t_profile_cl[index_point_color*extend_size], vx_profile_opt_cl[index_point_color*extend_size]*3.6, c=cValue,marker='s') # marker = squrare/x
+ax2.plot(t_profile_cl[:-1],ax_profile_opt,'k',linewidth=0.5)
+ax1.set_ylabel('Velocity[km/h]')
+ax2.set_ylabel('Acc[m/s^2]')
+ax1.set_xlabel('time[s]')
+plt.legend(['Acc'])
 #plt.show()
 
 # --------------------------------------------
