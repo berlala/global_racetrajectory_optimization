@@ -5,7 +5,7 @@ import matplotlib.pyplot as  plt
 
 
 # Required Input: kappa, el_lengths
-data = np.load('../../kanel_cl.npz') # 读取上赛道闭环轨迹结果
+data = np.load('../../outputs/kanel_cl.npz') # 读取上赛道闭环轨迹结果
 kappa = data['kappa']
 el_lengths = data['el_lengths']
 data_length = len(kappa)
