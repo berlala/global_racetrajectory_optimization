@@ -1,6 +1,10 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import sys
+sys.path.append('../..')
+import helper_funcs_glob
+import os
 
 # required input: path, el_lengths=None, psi_s/e, use_dist_scaling=False
 
@@ -30,11 +34,26 @@ import matplotlib.pyplot as plt
 #el_lengths=None
 #use_dist_scaling=False
 
-#Test Case 3
-path = np.array([(0,-4,4,4), 
-                 (4,0,4,4),
-                 (9,0,4,4),
-                 (12,0,4,4)]) # the last one is the extension
+# #Test Case 3
+# path = np.array([(0,-4,4,4), 
+#                  (4,0,4,4),
+#                  (9,0,4,4),
+#                  (12,0,4,4)]) # the last one is the extension
+# psi_s=math.pi/4
+# psi_e=0
+# el_lengths=None
+# use_dist_scaling=False
+
+#Test Case 4
+imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
+            "set_new_start": False,                 # set new starting point (changes order, not coordinates)
+            "new_start": np.array([0.0, -47.0]),    # [x_m, y_m], set new starting point
+            "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
+            "num_laps": 1}   
+
+path = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
+                                                        file_path='../../inputs/tracks/fridaytrack.csv',
+                                                        width_veh=2.0)
 psi_s=math.pi/4
 psi_e=0
 el_lengths=None

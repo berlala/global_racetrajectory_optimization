@@ -43,7 +43,7 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
             "num_laps": 1}   
 
 file_paths = {"veh_params_file": "racecar.ini"}
-file_paths["track_name"] = "shanghai"    # berlin_2018 
+file_paths["track_name"] = "fridaytrack"    # berlin_2018, shanghai,fridaytrack
 file_paths["module"] = os.path.dirname(os.path.abspath(__file__))
 file_paths["track_file"] = os.path.join(file_paths["module"], "inputs", "tracks", file_paths["track_name"] + ".csv")
 
@@ -55,10 +55,10 @@ reftrack_imp = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts
 
 #-----相当于pre_track-----------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
-start_index = 50
-end_index = 600
-#reftrack=reftrack_imp[start_index:end_index,:] #[1]截取开环轨迹
-reftrack=reftrack_imp #[1]原始闭环轨迹
+start_index = 380
+end_index = 2005
+reftrack=reftrack_imp[start_index:end_index,:] #[1]截取开环轨迹
+#reftrack=reftrack_imp #[1]原始闭环轨迹
 reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack,
                                                                 k_reg= 3,
                                                                 s_reg= 10,
@@ -66,14 +66,14 @@ reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack,
                                                                 stepsize_reg= 3.0,
                                                                 debug=False)    #[2]进行近似处理，注意spline_approximation会强行闭环
 #reftrack_interp = reftrack  #[2]不进行近似处理
-#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # [3]开环,补全最后一个
-refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  # [3]闭环，使收尾相等
+refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # [3]开环,补全最后一个
+#refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_interp[0,0:2]))  # [3]闭环，使收尾相等
 
-##Show the original track 
-#plt.plot(reftrack[:,0],reftrack[:,1])
-#plt.axis('equal')
-#plt.title('Original Track')
-#plt.show()
+# #Show the original track 
+# plt.plot(reftrack[:,0],reftrack[:,1])
+# plt.axis('equal')
+# plt.title('Original Track')
+# plt.show()
 
 #-----end of pre_track-----------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------
@@ -83,14 +83,14 @@ if np.all(np.isclose(refpath_interp_cl[0], refpath_interp_cl[-1])):
     closed = True
     psi_s = None
     psi_e = None
-    print("The track is closed.")
+    print("The track "+ file_paths["track_name"] +" is closed.")
 else:
     closed = False
     psi_s = math.atan((refpath_interp_cl[1,1] - refpath_interp_cl[0,1])/(refpath_interp_cl[1,0] - refpath_interp_cl[0,0])) # 开环必须提供首尾航向角
     psi_e = math.atan((refpath_interp_cl[-1,1] - refpath_interp_cl[-2,1])/(refpath_interp_cl[-1,0] - refpath_interp_cl[-2,0]))
     #print(psi_s/math.pi*180)
     #print(psi_e/math.pi*180)
-    print("The track is NOT closed.")
+    print("The track" + file_paths["track_name"] + " is NOT closed.")
 
 #reftrack_interp, coeffs_y, A, coeffs_x, coeffs_y = helper_funcs_glob.src.prep_track.prep_track(reftrack_imp=reftrack,
 #                                                reg_smooth_opts=pars["reg_smooth_opts"],
