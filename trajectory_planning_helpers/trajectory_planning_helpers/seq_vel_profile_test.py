@@ -9,6 +9,8 @@ data = np.load('../../outputs/kanel_cl.npz') # 读取上赛道闭环轨迹结果
 kappa = data['kappa']
 el_lengths = data['el_lengths']
 data_length = len(kappa)
+print(len(kappa))
+print(len(el_lengths))
 
 mu = 1.0 # constant mu
 grav = 9.8
@@ -44,6 +46,8 @@ if vel_kappa[5] == v_max and vel_kappa[-5]==v_max:
 # Double the track for avoid connection issue
 vel_kappa_double = np.concatenate((vel_kappa,vel_kappa),axis = 0)
 el_lengths_double = np.concatenate((el_lengths,el_lengths),axis = 0)
+print(len(vel_kappa_double))
+print(len(el_lengths_double))
 
 plt.plot(vel_kappa_double)
 
