@@ -62,8 +62,8 @@ reftrack=reftrack_imp[start_index:end_index,:] #[1]截取开环轨迹
 reftrack_interp = tph.spline_approximation.spline_approximation(track=reftrack,
                                                                 k_reg= 3,
                                                                 s_reg= 10,
-                                                                stepsize_prep= 1.0,
-                                                                stepsize_reg= 3.0,
+                                                                stepsize_prep= 5.0,
+                                                                stepsize_reg= 7.0,
                                                                 debug=False)    #[2]进行近似处理，注意spline_approximation会强行闭环
 #reftrack_interp = reftrack  #[2]不进行近似处理
 refpath_interp_cl = np.vstack((reftrack_interp[:, :2], reftrack_imp[end_index+1, 0:2]))  # [3]开环,补全最后一个
@@ -570,32 +570,32 @@ t_profile_cl = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_opt,
                                                 ax_profile=ax_profile_opt,
                                                 el_lengths=el_lengths_raceline_interp_cl)
 
-# Additional: 2015DSCC method
-vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
-                                                    el_lengths = el_lengths_raceline_interp_cl)
-if closed is True:  
-    vx_profile_dscc_cl = np.append(vx_profile_dscc, vx_profile_dscc[0])
-else:
-    vx_profile_dscc_cl = vx_profile_dscc
+# # Additional: 2015DSCC method
+# vx_profile_dscc = tph.seq_vel_profile.seq_vel_profile(kappa  = kappa_opt, 
+#                                                     el_lengths = el_lengths_raceline_interp_cl)
+# if closed is True:  
+#     vx_profile_dscc_cl = np.append(vx_profile_dscc, vx_profile_dscc[0])
+# else:
+#     vx_profile_dscc_cl = vx_profile_dscc
 
-ax_profile_dscc = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_dscc_cl,
-                                                    el_lengths=el_lengths_raceline_interp_cl,
-                                                    eq_length_output=False)
-t_profile_dscc = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_dscc_cl,
-                                                ax_profile=ax_profile_dscc,
-                                                el_lengths=el_lengths_raceline_interp_cl)
+# ax_profile_dscc = tph.calc_ax_profile.calc_ax_profile(vx_profile=vx_profile_dscc_cl,
+#                                                     el_lengths=el_lengths_raceline_interp_cl,
+#                                                     eq_length_output=False)
+# t_profile_dscc = tph.calc_t_profile.calc_t_profile(vx_profile=vx_profile_dscc_cl,
+#                                                 ax_profile=ax_profile_dscc,
+#                                                 el_lengths=el_lengths_raceline_interp_cl)
 # -----End of DSCC --------
 
 plt.figure(2)
 plt.subplot(2,1,1)
-plt.plot(s_raceline_interp, vx_profile_dscc)
+#plt.plot(s_raceline_interp, vx_profile_dscc)
 plt.plot(s_raceline_interp, vx_profile_opt)
 plt.xlabel('Distance[m]')
 plt.ylabel('Spd[m/s]')
-plt.legend(['DSCC','Origin'])
+#plt.legend(['DSCC','Origin'])
 plt.title('Velocity Result Compare')
 plt.subplot(2,1,2)
-plt.plot(t_profile_dscc, vx_profile_dscc_cl)
+#plt.plot(t_profile_dscc, vx_profile_dscc_cl)
 plt.plot(t_profile_cl, vx_profile_opt_cl)
 plt.xlabel('time[s]')
 plt.ylabel('Spd[m/s]')
@@ -603,13 +603,13 @@ plt.ylabel('Spd[m/s]')
 
 # == Lap Time == 
 laptime_origin_part = math.modf(max(t_profile_cl))
-laptime_dscc_part = math.modf(max(t_profile_dscc))
+#laptime_dscc_part = math.modf(max(t_profile_dscc))
 
 print('== == == Lap Time == == ==')
-print('Original Method Lap Time: '+ str(int(laptime_origin_part[1]/60)) + ' min ' + 
+print('Lap Time: '+ str(int(laptime_origin_part[1]/60)) + ' min ' + 
         str(int(laptime_origin_part[1]%60))+' sec '+str(int(1000*round(laptime_origin_part[0],3))))
-print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' + 
-        str(int(laptime_dscc_part[1]%60))+' sec '+str(int(1000*round(laptime_dscc_part[0],3))))
+# print('DSCC Method Lap Time: '+ str(int(laptime_dscc_part[1]/60)) + ' min ' + 
+#         str(int(laptime_dscc_part[1]%60))+' sec '+str(int(1000*round(laptime_dscc_part[0],3))))
 
 # ------------------------------------------------------------------------------------------------------------------
 # RESULT and PLOT for Velocity -------------------------------------------------------------------------------------
