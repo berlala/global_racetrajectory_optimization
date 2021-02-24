@@ -68,7 +68,7 @@ np.savetxt('fridaytrack.csv',result,delimiter=',')
 
 # Plot on the Map
 
-back_map = folium.Map([39.908156,116.397743],zoom_start=10)  # 中心点坐标，天安门，腾讯地图坐标拾取器获取
-route = folium.PolyLine(coordinate, weight=2,color='orange',opacity=0.8).add_to(back_map)
+back_map = folium.Map([39.907366,116.397400],zoom_start=20)  # 中心点坐标，天安门，腾讯地图坐标拾取器获取
+route = folium.PolyLine(coordinate, weight=2.5,color='blue',opacity=0.8).add_to(back_map)
 back_map.save('map.html') #显示地图
-webbrowser.open('map.ht`ml')
+webbrowser.open('map.html')
