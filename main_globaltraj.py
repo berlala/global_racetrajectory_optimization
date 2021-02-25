@@ -251,13 +251,15 @@ reftrack_interp, normvec_normalized_interp, a_interp, coeffs_x_interp, coeffs_y_
                                                 min_width=imp_opts["min_track_width"])
 # Pre-Track Result Check
 # [reftrack_interp] should have the same length as [normvec_normalized_interp].
-print(np.size(reftrack_interp,0))
-print(np.size(normvec_normalized_interp,0))
-print(reftrack_interp[0:10,:]);
-print(normvec_normalized_interp[0:10,:])
-plt.plot(reftrack_interp[0:10,0],reftrack_interp[0:10,1])
-plt.axis('equal')
-plt.show()
+if debug is True:
+    print(np.size(reftrack_interp,0))
+    print(np.size(normvec_normalized_interp,0))
+    print(reftrack_interp[0:10,:]);
+    print(normvec_normalized_interp[0:10,:])
+    plt.plot(reftrack_interp[0:10,0],reftrack_interp[0:10,1])
+    plt.axis('equal')
+    plt.title('Prep_track Res Debug')
+    plt.show()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # CALL OPTIMIZATION ----------------------------------------------------------------------------------------------------
