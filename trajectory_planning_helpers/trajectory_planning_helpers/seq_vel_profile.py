@@ -21,7 +21,7 @@ def seq_vel_profile(kappa: np.ndarray,
 
     # Double the track for avoid connection issue
     vel_kappa_double = np.concatenate((vel_kappa,vel_kappa),axis = 0)
-    el_lengths_double = np.concatenate((el_lengths,el_lengths),axis = 0)
+    el_lengths_double = np.concatenate((el_lengths,el_lengths),axis = 0) #TODO: check length match
 
     # second process: acceleration limit
     vel_acc =[]
