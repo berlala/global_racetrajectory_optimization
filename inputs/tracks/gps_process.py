@@ -1,6 +1,5 @@
 # GPS Tracker Data Process
-
-#TODO: 引入OSMNx进行地图投影
+# 使用folium库进行地图投影
 
 import numpy as np
 import csv
@@ -41,7 +40,7 @@ with open('FridayNightTrack.csv', mode='r',encoding='utf-8',newline='') as f:
             coordinate.append([float(row[3]),float(row[4])])
             Alt.append(row[6])
             Dis.append(row[8])
-            Spd.append(row[9])
+            Spd.append(float(row[9]))
             Heading.append(row[12])
             x,y = wgs84_to_webMercator(float(row[4]), float(row[3]))
             x_m.append(x)
@@ -67,8 +66,15 @@ np.savetxt('fridaytrack.csv',result,delimiter=',')
 
 
 # Plot on the Map
-
-back_map = folium.Map([39.907366,116.397400],zoom_start=20)  # 中心点坐标，天安门，腾讯地图坐标拾取器获取
-route = folium.PolyLine(coordinate, weight=2.5,color='blue',opacity=0.8).add_to(back_map)
+back_map = folium.Map(location=[39.907366,116.397400],zoom_start=13) #使用OpenStreetMap默认底图,中心点坐标，天安门，腾讯地图坐标拾取器获取
+#back_map = folium.Map(location=[39.907366,116.397400],zoom_start=13,tiles='http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}',attr='default')  # 注意使用高德地图需要对坐标进行转换
+#folium.PolyLine(coordinate, dash_array=10,color='blue',opacity=0.8).add_to(back_map) #dash_array虚线画线， weight实现画线
+folium.ColorLine(positions = coordinate, colors= Spd[:-1], colormap = ['r','g','b'], weight = 5).add_to(back_map) # 实现画图，给线赋速度信息
 back_map.save('map.html') #显示地图
 webbrowser.open('map.html')
+
+
+# Tips:
+# # 更换不同的底图
+# tiles='http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}', # 高德街道图
+# tiles='http://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', # 高德卫星图
