@@ -11,9 +11,6 @@ import pkg_resources
 import helper_funcs_glob
 
 """
-Created by:
-Alexander Heilmeier
-
 Documentation:
 This script has to be executed to generate an optimal trajectory based on a given reference track.
 """

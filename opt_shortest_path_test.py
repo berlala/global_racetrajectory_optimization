@@ -13,9 +13,7 @@ def opt_shortest_path(reftrack: np.ndarray,
                       w_veh: float,
                       print_debug: bool = False) -> np.ndarray:
     """
-    author:
-    Alexander Heilmeier
-
+    
     .. description::
     This function uses a QP solver to minimize the summed length of a path by moving the path points along their
     normal vectors within the track width.
