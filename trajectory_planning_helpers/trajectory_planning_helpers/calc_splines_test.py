@@ -6,6 +6,7 @@ sys.path.append('../..')
 import helper_funcs_glob
 import os
 
+# 散点通过等式条件计算各段之间的三次样条曲线系数，闭环非闭环均可
 # required input: path, el_lengths=None, psi_s/e, use_dist_scaling=False
 
 #Test Case 1 
@@ -52,7 +53,7 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
             "num_laps": 1}   
 
 path = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
-                                                        file_path='../../inputs/tracks/fridaytrack.csv',
+                                                        file_path='../../inputs/tracks/shanghai.csv',
                                                         width_veh=2.0)
 psi_s=math.pi/4
 psi_e=0

@@ -14,13 +14,14 @@ print(len(el_lengths))
 
 mu = 1.0 # constant mu
 grav = 9.8
-v_max = 75 # [m/s]
+v_max = 290/3.6 # [m/s]
 mass = 1500
 
 def _fcn_acc(v):
     m = 1500
     r = 0.25
-    T_acc_engine = max(0,480-v*10)
+    T_max = 550
+    T_acc_engine = max(0,T_max-v*10) 
     acc_max = T_acc_engine*13/(m*r)
     return acc_max
 
@@ -76,7 +77,7 @@ vel_rebuild = np.concatenate((patch_2,patch_1),axis=0)
 if len(patch_1) + len(patch_2) != data_length:
     raise ValueError("length is not matched!")
 
-plt.plot(vel_rebuild)
+plt.plot(vel_rebuild,'--')
 plt.legend(['Curv Cons','Acc cons','Dec cons','Final Res'])
 plt.ylabel('Spd[m/s]')
 plt.show()
