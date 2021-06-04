@@ -110,6 +110,8 @@ opt_energy_constraints/src/\.mypy_cache/
 comp_approx/DATA\.mat
 
 *.mat
+*.csv
+
 
 venv/
 

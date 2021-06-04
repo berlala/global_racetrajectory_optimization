@@ -196,12 +196,12 @@ def __solver_fb_acc_profile(p_ggv: np.ndarray,
         el_lengths_mod = np.flipud(el_lengths)
         mu_mod = np.flipud(mu)
         vx_profile = np.flipud(vx_profile)
-        mode = 'decel_backw'
+        mode = 'decel_backw' #反向计算，修正所有减速过程
     else:
         radii_mod = radii
         el_lengths_mod = el_lengths
         mu_mod = mu
-        mode = 'accel_forw'
+        mode = 'accel_forw' #正向计算，所有加速过程
 
     # ------------------------------------------------------------------------------------------------------------------
     # SEARCH START POINTS FOR ACCELERATION PHASES ----------------------------------------------------------------------
@@ -305,6 +305,7 @@ def calc_ax_poss(vx_start: float,
                  mode: str = 'accel_forw') -> float:
     """
     This function returns the possible longitudinal acceleration in the current step/point.
+    计算当前点可能的许用（最大）加速度
 
     .. inputs::
     :param vx_start:        [m/s] velocity at current point
@@ -327,7 +328,7 @@ def calc_ax_poss(vx_start: float,
     :type ax_max_machines:  np.ndarray
     :param mode:            [-] operation mode, can be 'accel_forw', 'decel_forw', 'decel_backw'
                             -> determines if machine limitations are considered and if ax should be considered negative
-                            or positive during deceleration (for possible backwards iteration)
+                            or positive during deceleration (for possible bac kwards iteration)
     :type mode:             str
 
     .. outputs::
@@ -382,9 +383,9 @@ def calc_ax_poss(vx_start: float,
     if mode == 'accel_forw':
         # interpolate machine acceleration to be able to consider varying gear ratios, efficiencies etc.
         ax_max_machines_tmp = np.interp(vx_start, ax_max_machines[:, 0], ax_max_machines[:, 1])
-        ax_avail_vehicle = min(ax_avail_tires, ax_max_machines_tmp)
+        ax_avail_vehicle = min(ax_avail_tires, ax_max_machines_tmp) #驱动力上限来自轮胎或是动力总成
     else:
-        ax_avail_vehicle = ax_avail_tires
+        ax_avail_vehicle = ax_avail_tires # 制动过程
 
     # ------------------------------------------------------------------------------------------------------------------
     # CONSIDER DRAG ----------------------------------------------------------------------------------------------------
@@ -424,7 +425,7 @@ ggv, ax_max_machines = trajectory_planning_helpers.import_veh_dyn_info.\
     import_veh_dyn_info(ggv_import_path='../../inputs/veh_dyn_info/ggv.csv',
                         ax_max_machines_import_path='../../inputs/veh_dyn_info/ax_max_machines.csv')
 
-data = np.load('../../kanel_cl.npz') # 读取上赛道闭环轨迹结果
+data = np.load('../../outputs/kanel_cl.npz') # 读取上赛道闭环轨迹结果
 kappa = data['kappa']
 el_lengths = data['el_lengths']
 closed = True
@@ -589,8 +590,6 @@ else:
         vx_profile[-5:] = v_max
 
     """We need to calculate the speed profile for two laps to get the correct starting and ending velocity."""
-    plt.subplot(2,1,1)
-    plt.plot(vx_profile)
 
     # double arrays 数组拼接，因为需要两圈
     vx_profile_double = np.concatenate((vx_profile, vx_profile), axis=0) 
@@ -599,7 +598,6 @@ else:
     mu_double = np.concatenate((mu, mu), axis=0)
     p_ggv_double = np.concatenate((p_ggv, p_ggv), axis=0)
 
-    plt.subplot(2,1,2)
     plt.plot(vx_profile_double)
     # calculate acceleration profile 正向加速度限制计算
     vx_profile_double = __solver_fb_acc_profile(p_ggv=p_ggv_double,
@@ -652,6 +650,8 @@ if filt_window is not None:
 # Review Result
 plt.subplot(2,1,1)
 plt.plot(vx_profile)
+plt.ylabel('spd[m/s]')
 plt.subplot(2,1,2)
 plt.plot(kappa)
+plt.ylabel('kappa')
 plt.show()
