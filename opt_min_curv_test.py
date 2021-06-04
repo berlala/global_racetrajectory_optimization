@@ -427,10 +427,10 @@ raceline = []
 for i in alpha_mincurv[int_index:]: #[:-1]和[-1]用法不一样，注意
     vec = normvectors_refline[int_index]
     base = reftrack[int_index]
-    track_x.append(base[0])
-    track_y.append(base[1])
+    track_x.append(base[0]) # center x 
+    track_y.append(base[1]) # center y 
 
-    bond_up_x.append(base[0] + vec[0]*-1*base[2])
+    bond_up_x.append(base[0] + vec[0]*-1*base[2]) # center_x+ (-1)*normal_x*w_l
     bond_up_y.append(base[1] + vec[1]*-1*base[2])
     bond_down_x.append(base[0] + vec[0]*+1*base[3])
     bond_down_y.append(base[1] + vec[1]*+1*base[3])
