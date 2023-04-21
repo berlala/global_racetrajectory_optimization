@@ -19,7 +19,10 @@ import matplotlib.pyplot as plt
 # return distance from point p to a point on the spline at spline parameter t_glob
 def dist_to_p(t_glob: np.ndarray, path: list, p: np.ndarray):
     s = interpolate.splev(t_glob, path)
-    return spatial.distance.euclidean(p, s)
+    s_list = []
+    for i in s:
+        s_list.append(i.tolist()[0])
+    return spatial.distance.euclidean(p, s_list)
 
 debug = True
 
@@ -82,6 +85,9 @@ t_glob_guess_cl = dists_cum_cl / dists_cum_cl[-1]       # start guess for the mi
 
 for i in range(no_points_track_cl):
 # get t_glob value for the point on the B spline with a minimum distance to the input points
+    print(t_glob_guess_cl[i])
+    print(track_cl[i, :2])
+
     closest_t_glob_cl[i] = optimize.fmin(dist_to_p,
                                             x0=t_glob_guess_cl[i],
                                             args=(tck_cl, track_cl[i, :2]),
