@@ -4,7 +4,7 @@
 import numpy as np 
 
 def cal_curv_points(x,y):
-    t_a = np.linalg.norm([x[1]-x[0] , y[1]-y[0]])
+    t_a = np.linalg.norm([x[1]-x[0],y[1]-y[0]])
     t_b = np.linalg.norm([x[2]-x[1],y[2]-y[1]])
 
     M = np.array([
