@@ -42,7 +42,8 @@ well.
 Use the provided `requirements.txt` in the root directory of this repo, in order to install all required modules.\
 `pip3 install -r /path/to/requirements.txt`
 
-The code is developed with Ubuntu 20.04 LTS and Python 3.7.
+The code is developed with Python 3.7.
+The current verison work with Python 3.9.16 and Numpy 1.24.3.
 
 ### Solutions for possible installation problems (Windows)
 * `cvxpy`, `cython` or any other package requires a `Visual C++ compiler` -> Download the build tools for Visual Studio
