@@ -6,7 +6,7 @@ def seq_vel_profile(kappa: np.ndarray,
 
     mu = 1.0 # constant mu
     grav = 9.8
-    v_max = 290/3.6 # [m/s]
+    v_max = 70 # [m/s]
     data_length = len(kappa)
 
     vel_kappa = []
@@ -47,7 +47,7 @@ def seq_vel_profile(kappa: np.ndarray,
     return vel_rebuild
 
 def _fcn_acc(v):
-    m = 1500
+    m = 1200
     r = 0.25
     T_max = 550
     T_acc_engine = max(0,T_max-v*10) 
@@ -55,7 +55,7 @@ def _fcn_acc(v):
     return acc_max
 
 def _fcn_del(v):
-    m = 1500
+    m = 1200
     g = 9.8
     mu = 1 - v*0.005
     F_brake = mu*m*g

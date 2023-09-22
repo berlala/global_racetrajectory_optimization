@@ -158,5 +158,6 @@ for i in range(len(track_reg)-2):
 plt.figure(2)    
 plt.plot(dists_cum_cl[:-3],kappa_org)
 plt.plot(dists_smt_cum_cl[:-2], kappa_smt)
+plt.legend(['Original Kappa','Smoothed Kappa'])
 plt.show()
 

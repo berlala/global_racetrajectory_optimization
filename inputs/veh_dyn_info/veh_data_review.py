@@ -1,5 +1,7 @@
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D #绘制3D坐标的函数
 import math 
 import csv
 
@@ -39,4 +41,10 @@ plt.plot(v_motor, ax_motor)
 plt.legend(['Ax GGV Max','Ay GGV Max','Ax Powertrain'])
 plt.xlabel('Spd[m/s]')
 plt.ylabel('Acc[m/s^2]')
+plt.show()
+
+fig2 = plt.figure()
+plt.plot(ax_ggv_max,ay_ggv_max,'o')
+plt.xlabel('Acc X [m/s]')
+plt.ylabel('Acc Y [m/s^2]')
 plt.show()

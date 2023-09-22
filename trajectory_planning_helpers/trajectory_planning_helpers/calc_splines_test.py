@@ -12,17 +12,17 @@ import os
 # required input: path, el_lengths=None, psi_s/e, use_dist_scaling=False
 
 #Test Case 1 
-#path = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
+# path = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
 #                (2,2,4,4),
 #                (4,4,4,4),
 #                (6,6,4,4),
 #                (10,8,4,4),
 #                (15,8,4,4),
 #                (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
-#psi_s=math.pi/4
-#psi_e=0
-#el_lengths=None
-#use_dist_scaling=False
+# psi_s=math.pi/4
+# psi_e=0
+# el_lengths=None
+# use_dist_scaling=False
 
 #Test Case 2
 #path = np.array([(0,0,4,4), 
@@ -47,20 +47,29 @@ import os
 # el_lengths=None
 # use_dist_scaling=False
 
-#Test Case 4
-imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
-            "set_new_start": False,                 # set new starting point (changes order, not coordinates)
-            "new_start": np.array([0.0, -47.0]),    # [x_m, y_m], set new starting point
-            "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
-            "num_laps": 1}   
-
-path = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
-                                                        file_path='../../inputs/tracks/shanghai.csv',
-                                                        width_veh=2.0)
-psi_s=math.pi/4
-psi_e=0
+#Test Case 1 
+path = np.array([(0,-1,4,4), # -1 instead of 0 in case norvec cross
+                 (6,4,4,4),
+                 (10,8,4,4),
+                 (20,8,4,4)]) # （中心坐标x, 中心坐标y, 左侧宽度，右侧宽度）
+psi_s= 0
+psi_e= 0
 el_lengths=None
 use_dist_scaling=False
+
+#Test Case 4
+# imp_opts = {"flip_imp_track": False,                # flip imported track to reverse direction
+#             "set_new_start": False,                 # set new starting point (changes order, not coordinates)
+#             "new_start": np.array([0.0, -47.0]),    # [x_m, y_m], set new starting point
+#             "min_track_width": None,                # [m] minimum enforced track width (set None to deactivate)
+#             "num_laps": 1}   
+# path = helper_funcs_glob.src.import_track.import_track(imp_opts=imp_opts,
+#                                                         file_path='../../inputs/tracks/shanghai.csv',
+#                                                         width_veh=2.0)
+# psi_s=math.pi/4
+# psi_e=0
+# el_lengths=None
+# use_dist_scaling=False
 
 # check if path is closed
 if np.all(np.isclose(path[0], path[-1])):
