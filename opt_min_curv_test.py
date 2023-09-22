@@ -139,7 +139,7 @@ if no_points * 4 != A.shape[0] or A.shape[0] != A.shape[1]:
 
 # create extraction matrix -> only b_i coefficients of the solved linear equation system are needed for gradient
 # information
-A_ex_b = np.zeros((no_points, no_points * 4), dtype=np.int64)
+A_ex_b = np.zeros((no_points, no_points * 4), dtype=int)
 
 for i in range(no_points):
     A_ex_b[i, i * 4 + 1] = 1    # 1 * b_ix = E_x * x
@@ -151,7 +151,7 @@ for i in range(no_points):
 
 # create extraction matrix -> only c_i coefficients of the solved linear equation system are needed for curvature
 # information
-A_ex_c = np.zeros((no_points, no_points * 4), dtype=np.int64)
+A_ex_c = np.zeros((no_points, no_points * 4), dtype=int)
 
 #print(np.size(A_ex_c,0)) 
 #print(np.size(A_ex_c,1))
@@ -626,7 +626,7 @@ ax1.plot(t_profile_cl,vx_profile_opt_cl*3.6)
 plt.title('Velocity Detial')
 extend_size = len(t_profile_cl)/len(result_x) # 不能再此处转成整数，会造成较大错位
 #print(extend_size)
-ax1.scatter(t_profile_cl[(np.multiply(index_point_color,extend_size)).astype(np.int64)], vx_profile_opt_cl[(np.multiply(index_point_color,extend_size)).astype(np.int64)]*3.6, c=cValue,marker='s') # marker = squrare/x
+ax1.scatter(t_profile_cl[(np.multiply(index_point_color,extend_size)).astype(int)], vx_profile_opt_cl[(np.multiply(index_point_color,extend_size)).astype(int)]*3.6, c=cValue,marker='s') # marker = squrare/x
 ax2.plot(t_profile_cl[:-1],ax_profile_opt,'k',linewidth=0.5)
 ax1.set_ylabel('Velocity[km/h]')
 ax2.set_ylabel('Acc[m/s^2]')

@@ -73,7 +73,7 @@ def opt_min_curv(reftrack: np.ndarray,
 
     # create extraction matrix -> only b_i coefficients of the solved linear equation system are needed for gradient
     # information
-    A_ex_b = np.zeros((no_points, no_points * 4), dtype=np.int)
+    A_ex_b = np.zeros((no_points, no_points * 4), dtype=int)
 
     for i in range(no_points):
         A_ex_b[i, i * 4 + 1] = 1    # 1 * b_ix = E_x * x
@@ -85,7 +85,7 @@ def opt_min_curv(reftrack: np.ndarray,
 
     # create extraction matrix -> only c_i coefficients of the solved linear equation system are needed for curvature
     # information
-    A_ex_c = np.zeros((no_points, no_points * 4), dtype=np.int)
+    A_ex_c = np.zeros((no_points, no_points * 4), dtype=int)
 
     for i in range(no_points):
         A_ex_c[i, i * 4 + 2] = 2    # 2 * c_ix = D_x * x
