@@ -420,7 +420,7 @@ if __name__ == "__main__":
             str(int(laptime_dscc_part[1]%60))+' sec '+str(int(1000*round(laptime_dscc_part[0],3))))
 
     plt.figure(3)  # 轨迹线带速度信息
-    cm = plt.cm.get_cmap('cool')
+    cm = plt.colormaps.get_cmap('cool')
     plt.plot(track_x, track_y,'--',linewidth=0.6)
     plt.plot(bond_up_x, bond_up_y)
     plt.plot(bond_down_x, bond_down_y)

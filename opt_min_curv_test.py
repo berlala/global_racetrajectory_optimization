@@ -643,7 +643,7 @@ plt.legend(['Acc'])
 #print(np.size(raceline_interp[:,0]))
 #print(np.size(vx_profile_opt_cl))
 plt.figure(4)  # 轨迹线带速度信息
-cm = plt.cm.get_cmap('cool')
+cm = plt.colormaps.get_cmap('cool')
 plt.plot(track_x, track_y,'--',linewidth=0.6)
 plt.plot(bond_up_x, bond_up_y)
 plt.plot(bond_down_x, bond_down_y)
